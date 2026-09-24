@@ -14,6 +14,7 @@
  */
 import { Agent } from "agents";
 import { createDriverDataSource } from "../db/driver";
+import { readOnly } from "../db/readonly";
 import type { DataSource } from "../db/types";
 import { scan, type ScanReport } from "../watch/scan";
 import { mergeFindings, type Finding, type TrackedFinding } from "../watch/findings";
@@ -58,8 +59,11 @@ export class WatchtowerAgent extends Agent<Env, WatchtowerState> {
   private llm: LLMProvider | null = null;
   private start: string | null = null;
 
+  /** Read-only: the Watchtower observes, it never changes anything. */
   private data(): DataSource {
-    return (this.ds ??= createDriverDataSource(this.env.MONGODB_URI, this.env.MONGODB_DB_NAME));
+    return (this.ds ??= readOnly(
+      createDriverDataSource(this.env.MONGODB_URI, this.env.MONGODB_DB_NAME),
+    ));
   }
 
   /** `onStart` runs on every wake; `schedule` with a cron is idempotent. */

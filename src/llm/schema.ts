@@ -6,6 +6,7 @@
 import { z } from "zod";
 import { QueryIntentSchema } from "../semantic/intent";
 import { CHART_TYPES } from "../semantic/chart";
+import { ActionIntentSchema } from "../desk/actions";
 
 /**
  * `.refine()` checks (the `YYYY-MM-DD` test) have no JSON Schema equivalent.
@@ -38,3 +39,6 @@ export const NARRATION_SCHEMA = toSchema(NarrationSchema);
 export const FindingNoteSchema = z.object({ note: z.string().max(600) });
 export type FindingNote = z.infer<typeof FindingNoteSchema>;
 export const FINDING_NOTE_SCHEMA = toSchema(FindingNoteSchema);
+
+/** The desk's write proposal. Same treatment as a read intent: typed, validated. */
+export const PROPOSE_ACTION_SCHEMA = toSchema(ActionIntentSchema);

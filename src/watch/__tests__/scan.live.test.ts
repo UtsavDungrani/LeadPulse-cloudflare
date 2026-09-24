@@ -17,6 +17,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { MongoClient, type Document } from "mongodb";
 import { readFileSync } from "node:fs";
 import type { DataSource } from "../../db/types";
+import { readOnlyFrom } from "../../db/readonly";
 import { scan } from "../scan";
 import { MATURATION_DAYS } from "../../semantic/metrics";
 import type { Finding } from "../findings";
@@ -56,12 +57,9 @@ afterAll(async () => {
   await client?.close();
 });
 
-const ds: DataSource = {
-  mode: "driver",
-  async aggregate(collection: string, pipeline: Document[]) {
-    return (await client!.db(DB).collection(collection).aggregate(pipeline).toArray()) as never;
-  },
-};
+const ds: DataSource = readOnlyFrom((collection, pipeline) =>
+  client!.db(DB).collection(collection).aggregate(pipeline).toArray(),
+);
 
 const scanAt = (isoDay: string) =>
   scan(ds, { asOf: new Date(`${isoDay}T06:00:00.000Z`), dataStart: DATA_START });

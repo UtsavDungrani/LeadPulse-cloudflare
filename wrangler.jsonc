@@ -8,13 +8,16 @@
   "durable_objects": {
     "bindings": [
       { "name": "AnalystAgent", "class_name": "AnalystAgent" },
-      { "name": "WatchtowerAgent", "class_name": "WatchtowerAgent" }
+      { "name": "WatchtowerAgent", "class_name": "WatchtowerAgent" },
+      { "name": "ReportAgent", "class_name": "ReportAgent" },
+      { "name": "LeadDeskAgent", "class_name": "LeadDeskAgent" }
     ]
   },
 
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["AnalystAgent"] },
-    { "tag": "v2", "new_sqlite_classes": ["WatchtowerAgent"] }
+    { "tag": "v2", "new_sqlite_classes": ["WatchtowerAgent"] },
+    { "tag": "v3", "new_sqlite_classes": ["ReportAgent", "LeadDeskAgent"] }
   ],
 
   // Workers AI binding - kept as the fallback intent generator.
@@ -36,10 +39,17 @@
     // When the Watchtower sweeps. Daily, because the detection windows are
     // measured in days - scanning hourly re-tests the same data and spends the
     // multiple-comparison budget for nothing.
-    "WATCH_CRON": "0 7 * * *"
+    "WATCH_CRON": "0 7 * * *",
+    // Weekly digest, Monday morning.
+    "REPORT_CRON": "0 8 * * 1",
+    // Delivery is OFF by default. "webhook" also needs the REPORT_WEBHOOK_URL
+    // secret, and a decision about who may receive lead volumes, rep names and
+    // spend figures.
+    "REPORT_SINK": "none"
   }
 
   // Secrets (never commit - use .dev.vars locally, `wrangler secret put` remotely):
   //   MONGODB_URI
   //   ANTHROPIC_API_KEY
+  //   REPORT_WEBHOOK_URL  (only when REPORT_SINK is "webhook")
 }

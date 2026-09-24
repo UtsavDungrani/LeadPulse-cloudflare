@@ -109,7 +109,14 @@ function sortStage(dimensions: readonly DimensionId[], grain: Grain): Document |
   return Object.keys(sort).length === 0 ? null : { $sort: sort };
 }
 
-function filterClause(f: Filter): Document {
+/**
+ * One validated filter -> one `$match` clause.
+ *
+ * Exported because the write path in `desk/compile.ts` selects the leads it
+ * will change with exactly this vocabulary. The whitelist that protects reads
+ * is the whitelist that protects writes; there is no second, looser one.
+ */
+export function filterClause(f: Filter): Document {
   const def: FieldDef = field(f.field);
   const path = def.path;
   const one = () => coerceValue(def, f.values[0] as string);

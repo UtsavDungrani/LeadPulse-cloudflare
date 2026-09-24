@@ -17,11 +17,15 @@ import { validateIntent, IntentError } from "../semantic/intent";
 import type { ResultSet } from "../semantic/execute";
 import type { ChartType } from "../semantic/chart";
 import {
+  deskRepairPrompt,
+  deskSystemPrompt,
+  digestSystemPrompt,
   findingSystemPrompt,
   findingUserPrompt,
   intentSystemPrompt,
   narrationSystemPrompt,
   narrationUserPrompt,
+  type DeskContext,
   type FindingBrief,
   type PromptContext,
 } from "./prompts";
@@ -30,15 +34,34 @@ import {
   DeclineSchema,
   FindingNoteSchema,
   NarrationSchema,
+  PROPOSE_ACTION_SCHEMA,
   RUN_QUERY_SCHEMA,
   type Narration,
 } from "./schema";
 import { LLMError, type LLMProvider } from "./types";
+import { validateAction, ActionError, type DeskPlan } from "../desk/actions";
 
 const MODEL = "claude-opus-5";
 
 /** One repair round. A second one has never fixed what the first could not. */
 const MAX_REPAIRS = 1;
+
+const DESK_TOOLS: Anthropic.Tool[] = [
+  {
+    name: "propose_action",
+    description:
+      "Propose a change for a human to approve. Nothing is written until they do. Emit the ActionIntent; a deterministic compiler turns it into the filter and update they will see.",
+    strict: true,
+    input_schema: PROPOSE_ACTION_SCHEMA as Anthropic.Tool.InputSchema,
+  },
+  {
+    name: "decline",
+    description:
+      "The request cannot be turned into a safe, specific change. Explain what is missing and suggest the nearest change that can be made.",
+    strict: true,
+    input_schema: DECLINE_SCHEMA as Anthropic.Tool.InputSchema,
+  },
+];
 
 const TOOLS: Anthropic.Tool[] = [
   {
@@ -139,6 +162,71 @@ export function createClaudeProvider(apiKey: string): LLMProvider {
       return parsed;
     },
 
+    /**
+     * The write-side planner. Structurally identical to `plan`, because the
+     * safety property is the same one: the model emits a typed object that a
+     * compiler turns into the operation, and a rejected object comes straight
+     * back as a repair prompt.
+     */
+    async propose(request: string, ctx: DeskContext): Promise<DeskPlan> {
+      const messages: Anthropic.MessageParam[] = [{ role: "user", content: request }];
+      let lastError = "";
+
+      for (let attempt = 0; attempt <= MAX_REPAIRS; attempt++) {
+        const response = await client.messages.create({
+          model: MODEL,
+          max_tokens: 4096,
+          system: deskSystemPrompt(ctx),
+          tools: DESK_TOOLS,
+          tool_choice: { type: "auto" },
+          messages,
+        });
+
+        if (response.stop_reason === "refusal") {
+          throw new LLMError("the desk planner declined for safety reasons", "claude");
+        }
+
+        const call = response.content.find(
+          (b): b is Anthropic.ToolUseBlock => b.type === "tool_use",
+        );
+        if (!call) {
+          lastError = "You must answer by calling either propose_action or decline.";
+        } else if (call.name === "decline") {
+          const parsed = DeclineSchema.safeParse(call.input);
+          if (parsed.success) {
+            return { kind: "refusal", reason: parsed.data.reason, suggestion: parsed.data.suggestion };
+          }
+          lastError = "The decline call was malformed; it needs `reason` and `suggestion`.";
+        } else {
+          try {
+            return { kind: "action", intent: validateAction(call.input) };
+          } catch (e) {
+            if (!(e instanceof ActionError)) throw e;
+            lastError = e.message;
+          }
+        }
+
+        messages.push(
+          { role: "assistant", content: response.content },
+          {
+            role: "user",
+            content: call
+              ? [
+                  {
+                    type: "tool_result",
+                    tool_use_id: call.id,
+                    is_error: true,
+                    content: deskRepairPrompt(lastError),
+                  },
+                ]
+              : lastError,
+          },
+        );
+      }
+
+      throw new LLMError(`could not produce a valid ActionIntent: ${lastError}`, "claude");
+    },
+
     async narrateFinding(finding: FindingBrief): Promise<string> {
       const response = await client.messages.parse({
         model: MODEL,
@@ -149,6 +237,19 @@ export function createClaudeProvider(apiKey: string): LLMProvider {
       });
       const parsed = response.parsed_output;
       if (!parsed) throw new LLMError("finding note did not match the expected schema", "claude");
+      return parsed.note;
+    },
+
+    async summariseDigest(brief: string): Promise<string> {
+      const response = await client.messages.parse({
+        model: MODEL,
+        max_tokens: 1536,
+        system: digestSystemPrompt(),
+        messages: [{ role: "user", content: brief }],
+        output_config: { format: zodOutputFormat(FindingNoteSchema) },
+      });
+      const parsed = response.parsed_output;
+      if (!parsed) throw new LLMError("digest summary did not match the expected schema", "claude");
       return parsed.note;
     },
   };

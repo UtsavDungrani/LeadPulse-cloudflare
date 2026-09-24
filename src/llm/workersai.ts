@@ -15,11 +15,14 @@ import { validateIntent, IntentError } from "../semantic/intent";
 import type { ResultSet } from "../semantic/execute";
 import type { ChartType } from "../semantic/chart";
 import {
+  deskSystemPrompt,
+  digestSystemPrompt,
   findingSystemPrompt,
   findingUserPrompt,
   intentSystemPrompt,
   narrationSystemPrompt,
   narrationUserPrompt,
+  type DeskContext,
   type FindingBrief,
   type PromptContext,
 } from "./prompts";
@@ -29,10 +32,12 @@ import {
   FindingNoteSchema,
   NARRATION_SCHEMA,
   NarrationSchema,
+  PROPOSE_ACTION_SCHEMA,
   RUN_QUERY_SCHEMA,
   type Narration,
 } from "./schema";
 import { LLMError, type LLMProvider } from "./types";
+import { validateAction, ActionError, type DeskPlan } from "../desk/actions";
 
 const MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 const MAX_REPAIRS = 2;
@@ -43,6 +48,18 @@ const PLAN_SCHEMA = {
   properties: {
     action: { type: "string", enum: ["run_query", "decline"] },
     intent: RUN_QUERY_SCHEMA,
+    decline: DECLINE_SCHEMA,
+  },
+  required: ["action"],
+  additionalProperties: false,
+};
+
+/** The desk union, flattened the same way the read-side plan is. */
+const DESK_PLAN_SCHEMA = {
+  type: "object",
+  properties: {
+    action: { type: "string", enum: ["propose_action", "decline"] },
+    proposal: PROPOSE_ACTION_SCHEMA,
     decline: DECLINE_SCHEMA,
   },
   required: ["action"],
@@ -134,6 +151,43 @@ it to "decline" and fill "decline" with { reason, suggestion }. No prose, no mar
       return parsed.data;
     },
 
+    async propose(request: string, ctx: DeskContext): Promise<DeskPlan> {
+      const system = `${deskSystemPrompt(ctx)}
+
+Reply with a single JSON object. Set "action" to "propose_action" and fill "proposal", or
+set it to "decline" and fill "decline" with { reason, suggestion }. No prose, no markdown.`;
+      let user = request;
+      let lastError = "";
+
+      for (let attempt = 0; attempt <= MAX_REPAIRS; attempt++) {
+        const out = (await askJson(runner, system, user, DESK_PLAN_SCHEMA)) as {
+          action?: string;
+          proposal?: unknown;
+          decline?: { reason?: string; suggestion?: string };
+        };
+
+        if (out?.action === "decline") {
+          return {
+            kind: "refusal",
+            reason: out.decline?.reason ?? "This change cannot be made safely from this request.",
+            suggestion: out.decline?.suggestion ?? "",
+          };
+        }
+        try {
+          return { kind: "action", intent: validateAction(out?.proposal) };
+        } catch (e) {
+          if (!(e instanceof ActionError)) throw e;
+          lastError = e.message;
+          user = `${request}
+
+Your previous proposal was rejected: ${lastError}
+Return a corrected JSON object.`;
+        }
+      }
+
+      throw new LLMError(`could not produce a valid ActionIntent: ${lastError}`, "workers-ai");
+    },
+
     async narrateFinding(finding: FindingBrief): Promise<string> {
       const out = await askJson(
         runner,
@@ -143,6 +197,13 @@ it to "decline" and fill "decline" with { reason, suggestion }. No prose, no mar
       );
       const parsed = FindingNoteSchema.safeParse(out);
       if (!parsed.success) throw new LLMError("finding note did not match the expected schema", "workers-ai");
+      return parsed.data.note;
+    },
+
+    async summariseDigest(brief: string): Promise<string> {
+      const out = await askJson(runner, digestSystemPrompt(), brief, FINDING_NOTE_SCHEMA);
+      const parsed = FindingNoteSchema.safeParse(out);
+      if (!parsed.success) throw new LLMError("digest summary did not match the expected schema", "workers-ai");
       return parsed.data.note;
     },
   };

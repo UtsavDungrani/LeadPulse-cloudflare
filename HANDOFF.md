@@ -28,12 +28,13 @@ month vs last"*, *"which rep is sitting on stale leads"*, *"why did conversions 
 | 0 | Data foundry — clean + synthesise + export | **DONE**, imported to local Mongo |
 | 1 | Semantic layer + `AnalystAgent` + charts | **DONE** — see §9 |
 | 2 | `WatchtowerAgent` (scheduled anomaly detection) | **DONE** — see §10 |
-| 3 | `ReportAgent` (cron digests), `LeadDeskAgent` (writes, HITL) | **NEXT** (optional) |
+| 3 | `ReportAgent` (cron digests), `LeadDeskAgent` (writes, HITL) | **DONE** — see §11 |
 
-Both agents are complete and tested end to end against the local database.
-Not yet built: the React UI, and the model-facing half of the Phase 1 eval has
-run structurally but never against the API (no key configured). Details and
-exact gaps in §9d and §10g.
+All four agents are complete and tested end to end against the local database.
+The largest remaining gaps: there is still no UI, the write path has no
+authenticated actor identity, and the model path has only ever run on Workers AI
+because `ANTHROPIC_API_KEY` is commented out in `.dev.vars`. Details in §9d,
+§10g and §11g.
 
 ---
 
@@ -599,3 +600,168 @@ curl -s -X POST localhost:8787/api/watch/acknowledge -H 'content-type: applicati
    `lead_origin` and paid `channel`.
 5. **The narration path has only ever run on Workers AI**, like the rest of the
    project — `ANTHROPIC_API_KEY` is still commented out in `.dev.vars`.
+
+---
+
+## 11. Phase 3 — the digest and the desk
+
+Two agents. One delivers, one writes.
+
+```
+src/report/
+  digest.ts     deterministic assembly, two windows, markdown rendering
+  deliver.ts    sinks: none (default) | webhook
+src/desk/
+  actions.ts    Zod ActionIntent + the writable-field whitelist — pure
+  compile.ts    ActionIntent -> filter + $set, with invariant guards — pure
+  apply.ts      preview / apply / undo / audit
+src/agents/report.ts
+src/agents/leaddesk.ts
+src/db/readonly.ts    read-only DataSource wrappers
+```
+
+### 11a. The write surface is one method
+
+`DataSource` gained exactly two writes: `updateMany` and `insertOne`. There is
+no `deleteMany`, no `drop`, no `runCommand` and no raw handle, because an
+interface cannot be talked into an operation it does not expose — and the caller
+is ultimately a language model's proposal.
+
+**The Analyst, the Watchtower and the Report agent are handed a source whose
+writes throw** (`db/readonly.ts`). `LeadDeskAgent` is the only one with a
+writable source. If you are auditing whether a model can change your data, that
+agent and `src/desk/` are the entire surface.
+
+### 11b. What may be written, and the rule that decides it
+
+Phase 0's rule was *outcomes are never invented; only timing is synthesised*.
+The same rule, carried into the write path:
+
+> The desk can change **how you work a lead**. It can never change **what
+> happened to it**.
+
+Writable: `owner_id`, `stage`, `consent.do_not_email`, `consent.do_not_call`.
+Not writable, and unreachable rather than merely discouraged — the action enum
+*is* the whitelist: `converted`, `converted_at`, `days_to_convert`,
+`created_at`, `lead_source`, and everything under `analysis_only`.
+
+Two consequences worth stating:
+
+- **`Won` is not an assignable stage.** It is an outcome wearing a workflow
+  field's clothing. A copilot that can quietly mark a lead converted can corrupt
+  every number the other three agents report.
+- **A stage change never touches a converted lead**, and always writes `is_open`
+  alongside `stage`. Those two fields are one fact; writing one without the
+  other makes `open_pipeline` disagree with `stage` and nothing downstream would
+  notice until someone questioned a report.
+
+`filters` and `dateRange` are both **required**. Combined, they make "change
+every lead in the database" unexpressible rather than merely discouraged.
+
+### 11c. The human-in-the-loop path
+
+```
+propose  ->  typed ActionIntent, compiled to an exact filter and $set, run as a
+             dry run, returned with the real affected count, a sample, and the
+             current distribution of the field being overwritten. No write.
+approve  ->  count re-checked, prior values captured, update applied, audit
+             record appended.
+```
+
+There is deliberately **no endpoint that takes a request and writes in one
+step**, no auto-approve and no confidence threshold that skips the human.
+
+The guards, in the order they will save you:
+
+- **The preview shows the query, not a description of it.** What you approve is
+  `compileAction`'s literal output.
+- **The count is re-checked at approval.** If the number of matching leads moved
+  between preview and approval, the world changed underneath the proposal and it
+  is refused. Verified against a concurrent insert.
+- **Proposals are single-use and expire after 15 minutes.** An approval is for
+  one change at one moment, not a standing permission.
+- **Prior values are captured before the write**, so anything can be undone.
+- **The audit collection is append-only.** "Already undone" is derived from the
+  presence of a reversal record, not from a mutable flag — a trail you may edit
+  is not a trail.
+- **Blocked outright**: nothing matches, more matched than the proposal's own
+  limit, more than the hard ceiling of 500, or every match already holds the
+  target value.
+
+### 11d. The digest reports two windows, on purpose
+
+A digest that reports "conversion rate last week" is confidently wrong.
+Conversion lag runs from days to two months depending on channel, so last week's
+cohort has barely started converting — the number always looks like a collapse
+and always recovers, and the reader learns to ignore it.
+
+So the digest separates what is knowable *now* from what is knowable *yet*:
+
+- **This period** — leads created, cost per lead, SLA breach rate.
+- **Matured cohort** — 21-day conversion rate, CAC, days to convert, for a
+  window that ended `MATURATION_DAYS` ago.
+
+Both blocks name their window. The change column is phrased by whether the move
+is *good* rather than which way it went, so a reader does not have to hold the
+polarity of every metric in their head: `up 9% — worse`.
+
+Findings come from the Watchtower rather than a second detector — two components
+independently computing "what is wrong" is how a digest ends up contradicting an
+alert someone already acted on. The digest states when the Watchtower last
+swept, because findings from three weeks ago are not this week's news.
+
+### 11e. Delivery is off by default
+
+`REPORT_SINK` defaults to `none`. The webhook sink additionally needs a
+`REPORT_WEBHOOK_URL` secret and rejects anything that is not https.
+
+`none` is not a stub — it is the correct production setting until someone has
+decided who should receive these and agreed that lead volumes, rep names and
+spend figures may leave the system. Nothing is posted anywhere because a digest
+happened to be generated.
+
+### 11f. Results
+
+`npm test` — 217 assertions across 11 files.
+
+The desk's integration tests run in **their own scratch database**, seeded and
+dropped by the test file. The `leadpulse` dataset is the answer key for every
+other eval in the project, and a write test that mutated the fixture it is
+measured against would silently invalidate its neighbours.
+
+Verified end to end through `wrangler dev` against the real data, then reverted:
+
+| Step | Result |
+|---|---|
+| propose | model produced a valid `ActionIntent`; preview matched 45 leads |
+| preview | surfaced that **6 of the 45 were already on REP007** |
+| approve | `matched: 45, modified: 39` — the 6 were untouched, as previewed |
+| replay the approval | refused: *"already applied"* |
+| revert | owner distribution returned **byte-identical to baseline** |
+| full suite after | 217 passing — the dataset is intact |
+
+The two audit records from that run are still in the `audit` collection. They
+are the honest history of a change that was made and reversed, which is what the
+collection is for.
+
+### 11g. What is not done
+
+1. **Still no UI.** Four agents, a chart-spec contract and a markdown digest, and
+   nothing renders any of it.
+2. **No authentication or actor identity.** `approve` trusts whoever can reach
+   the endpoint, and the audit record has no `who`. Before this is exposed to
+   anyone, approval needs an authenticated actor and that actor needs to be in
+   the audit record — the trail currently answers *what* and *why* but not *who*.
+3. **Delivery has never actually posted anywhere**, by design. The webhook path
+   is implemented and unit-tested for its refusals; it has not been exercised
+   against a live endpoint.
+4. **Undo is capped at the proposal's `limit`.** An action that touched the
+   maximum 500 leads captures 500 prior values; the cap and the capture are the
+   same number, so this holds, but it is a coupling worth knowing about.
+5. **No scheduled digest has fired on its own cron** — every run in testing was
+   triggered manually with an explicit `asOf`.
+6. **The model path remains Workers AI only.** `ANTHROPIC_API_KEY` is still
+   commented out in `.dev.vars`. The fallback model produced a valid, correct
+   `ActionIntent` for the desk, but its digest summary was degenerate enough
+   that a quality gate now rejects a summary citing no figures at all and keeps
+   the computed one.

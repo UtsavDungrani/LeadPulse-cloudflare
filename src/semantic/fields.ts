@@ -121,7 +121,7 @@ export function field(id: FieldId): FieldDef {
  * field type, so `converted = "true"` becomes a boolean and never matches
  * nothing forever.
  */
-export function coerceValue(f: FieldDef, raw: string): string | number | boolean {
+export function coerceValue(f: Pick<FieldDef, "path" | "type">, raw: string): string | number | boolean {
   switch (f.type) {
     case "bool": {
       const v = raw.trim().toLowerCase();

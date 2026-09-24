@@ -1,12 +1,16 @@
-import { getAgentByName, routeAgentRequest } from "agents";
+import { getAgentByName, routeAgentRequest, type Agent } from "agents";
 import { AnalystAgent, type Env } from "./agents/analyst";
 import { WatchtowerAgent } from "./agents/watchtower";
+import { ReportAgent } from "./agents/report";
+import { LeadDeskAgent } from "./agents/leaddesk";
 import { METRICS, METRIC_IDS } from "./semantic/metrics";
 import { DIMENSION_IDS, FIELDS } from "./semantic/fields";
 
-export { AnalystAgent, WatchtowerAgent };
+export { AnalystAgent, WatchtowerAgent, ReportAgent, LeadDeskAgent };
 export type { Env, AnalystState, AnalystAnswer } from "./agents/analyst";
 export type { WatchtowerState } from "./agents/watchtower";
+export type { ReportState } from "./agents/report";
+export type { LeadDeskState } from "./agents/leaddesk";
 
 const DEFAULT_SESSION = "default";
 
@@ -48,9 +52,19 @@ export default {
     // The Watchtower feed: what the pipeline looks like right now, without
     // anyone having had to ask a question.
     if (url.pathname.startsWith("/api/watch")) {
-      const agent = await getAgentByName(env.WatchtowerAgent, DEFAULT_SESSION);
-      const leaf = url.pathname.slice("/api/watch".length) || "/";
-      return agent.fetch(new Request(new URL(leaf, url).toString(), req));
+      return forward(env.WatchtowerAgent, "/api/watch", url, req);
+    }
+
+    // The weekly digest.
+    if (url.pathname.startsWith("/api/report")) {
+      return forward(env.ReportAgent, "/api/report", url, req);
+    }
+
+    // The write path. Every route under here is propose / approve / reject /
+    // revert - there is deliberately no endpoint that takes a request and
+    // writes in one step.
+    if (url.pathname.startsWith("/api/desk")) {
+      return forward(env.LeadDeskAgent, "/api/desk", url, req);
     }
 
     return (
@@ -58,3 +72,21 @@ export default {
     );
   },
 } satisfies ExportedHandler<Env>;
+
+/**
+ * Route a prefixed path to one agent, preserving the leaf.
+ *
+ * The state parameter is left open: these four agents hold unrelated state
+ * shapes and this function only ever calls `fetch` on the stub.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function forward<A extends Agent<Env, any>>(
+  namespace: DurableObjectNamespace<A>,
+  prefix: string,
+  url: URL,
+  req: Request,
+): Promise<Response> {
+  const agent = await getAgentByName(namespace, DEFAULT_SESSION);
+  const leaf = url.pathname.slice(prefix.length) || "/";
+  return agent.fetch(new Request(new URL(leaf, url).toString(), req));
+}

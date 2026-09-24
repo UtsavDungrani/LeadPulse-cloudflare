@@ -14,6 +14,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { MongoClient, type Document } from "mongodb";
 import { readFileSync } from "node:fs";
 import type { DataSource } from "../../db/types";
+import { readOnlyFrom } from "../../db/readonly";
 import { execute } from "../execute";
 import { validateIntent, type QueryIntent } from "../intent";
 import type { FieldId } from "../fields";
@@ -59,12 +60,9 @@ afterAll(async () => {
   await client?.close();
 });
 
-const ds: DataSource = {
-  mode: "driver",
-  async aggregate(collection: string, pipeline: Document[]) {
-    return (await client!.db(DB).collection(collection).aggregate(pipeline).toArray()) as never;
-  },
-};
+const ds: DataSource = readOnlyFrom((collection, pipeline) =>
+  client!.db(DB).collection(collection).aggregate(pipeline).toArray(),
+);
 
 const intent = (patch: Partial<QueryIntent>): QueryIntent =>
   validateIntent({

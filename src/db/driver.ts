@@ -39,5 +39,16 @@ export function createDriverDataSource(uri: string, dbName: string): DataSource 
       const c = await getClient();
       return c.db(dbName).collection(collection).aggregate<T>(pipeline).toArray();
     },
+
+    async updateMany(collection: string, filter: Document, update: Document) {
+      const c = await getClient();
+      const r = await c.db(dbName).collection(collection).updateMany(filter, update);
+      return { matched: r.matchedCount, modified: r.modifiedCount };
+    },
+
+    async insertOne(collection: string, doc: Document): Promise<void> {
+      const c = await getClient();
+      await c.db(dbName).collection(collection).insertOne(doc);
+    },
   };
 }

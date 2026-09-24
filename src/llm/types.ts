@@ -1,7 +1,8 @@
 import type { AgentPlan } from "../semantic/intent";
 import type { ResultSet } from "../semantic/execute";
 import type { ChartType } from "../semantic/chart";
-import type { FindingBrief, PromptContext } from "./prompts";
+import type { DeskContext, FindingBrief, PromptContext } from "./prompts";
+import type { DeskPlan } from "../desk/actions";
 import type { Narration } from "./schema";
 
 /**
@@ -18,6 +19,10 @@ export interface LLMProvider {
   narrate(question: string, result: ResultSet, allowedChartTypes: ChartType[]): Promise<Narration>;
   /** A detected finding -> a sentence a person can act on. */
   narrateFinding(finding: FindingBrief): Promise<string>;
+  /** A request -> a proposed write, or a documented refusal. Never applied here. */
+  propose(request: string, ctx: DeskContext): Promise<DeskPlan>;
+  /** An assembled digest -> its opening paragraph. */
+  summariseDigest(brief: string): Promise<string>;
 }
 
 export class LLMError extends Error {

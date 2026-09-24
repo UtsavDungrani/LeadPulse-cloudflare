@@ -13,6 +13,7 @@
  */
 import { Agent } from "agents";
 import { createDriverDataSource } from "../db/driver";
+import { readOnly } from "../db/readonly";
 import type { DataSource } from "../db/types";
 import type { QueryIntent } from "../semantic/intent";
 import { execute, type ResultSet, type ResultRow } from "../semantic/execute";
@@ -24,6 +25,8 @@ import { createProvider, refusalMessage, type LLMProvider } from "../llm";
 export interface Env {
   AnalystAgent: DurableObjectNamespace<AnalystAgent>;
   WatchtowerAgent: DurableObjectNamespace<import("./watchtower").WatchtowerAgent>;
+  ReportAgent: DurableObjectNamespace<import("./report").ReportAgent>;
+  LeadDeskAgent: DurableObjectNamespace<import("./leaddesk").LeadDeskAgent>;
   AI: Ai;
   MONGODB_URI: string;
   MONGODB_DB_NAME: string;
@@ -33,6 +36,12 @@ export interface Env {
   ANTHROPIC_API_KEY: string;
   /** Cron for the Watchtower sweep. Empty falls back to the daily default. */
   WATCH_CRON?: string;
+  /** Cron for the weekly digest. Empty falls back to Monday morning. */
+  REPORT_CRON?: string;
+  /** "none" (default) or "webhook". Delivery is off unless set deliberately. */
+  REPORT_SINK?: string;
+  /** Secret. Only read when REPORT_SINK is "webhook". */
+  REPORT_WEBHOOK_URL?: string;
 }
 
 export interface AnalystState {
@@ -76,8 +85,11 @@ export class AnalystAgent extends Agent<Env, AnalystState> {
   private llm: LLMProvider | null = null;
   private window: DateRange | null = null;
 
+  /** Read-only: the Analyst answers questions, it never changes anything. */
   private data(): DataSource {
-    return (this.ds ??= createDriverDataSource(this.env.MONGODB_URI, this.env.MONGODB_DB_NAME));
+    return (this.ds ??= readOnly(
+      createDriverDataSource(this.env.MONGODB_URI, this.env.MONGODB_DB_NAME),
+    ));
   }
 
   private provider(): LLMProvider {
