@@ -1,0 +1,40 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "leadpulse",
+  "main": "src/server.ts",
+  "compatibility_date": "2026-09-24",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "durable_objects": {
+    "bindings": [
+      { "name": "AnalystAgent", "class_name": "AnalystAgent" }
+      // Phase 2+: { "name": "WatchtowerAgent", "class_name": "WatchtowerAgent" }
+    ]
+  },
+
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["AnalystAgent"] }
+  ],
+
+  // Workers AI binding - kept as the fallback intent generator.
+  "ai": { "binding": "AI" },
+
+  "vars": {
+    "MONGODB_DB_NAME": "leadpulse",
+    // How the Worker reaches Mongo. See HANDOFF.md "The data path problem".
+    //   "driver" - mongodb driver inside the Worker over nodejs_compat. This is
+    //              what runs: the Phase 1 spike passed against local Mongo and
+    //              the integration suite exercises it. The client must live in
+    //              a Durable Object, not a module-level cache - see db/driver.ts.
+    //   "bridge" - HTTP to a Node service holding the driver. Never built; kept
+    //              as the documented fallback if Atlas TLS misbehaves in prod.
+    "DATA_PATH_MODE": "driver",
+    "BRIDGE_URL": "http://127.0.0.1:8787",
+    // "claude" | "workers-ai"
+    "LLM_PROVIDER": "claude"
+  }
+
+  // Secrets (never commit - use .dev.vars locally, `wrangler secret put` remotely):
+  //   MONGODB_URI
+  //   ANTHROPIC_API_KEY
+}

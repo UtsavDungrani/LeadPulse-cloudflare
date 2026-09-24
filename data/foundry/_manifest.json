@@ -1,0 +1,272 @@
+{
+  "generated_at": "2026-09-24T04:24:31.913804+00:00",
+  "seed": 7,
+  "source_file": "Leads.csv",
+  "window": {
+    "start": "2025-07-24",
+    "end": "2026-09-24"
+  },
+  "counts": {
+    "leads": 9239,
+    "activities": 78425,
+    "channel_spend": 1712,
+    "reps": 12,
+    "converted": 3561
+  },
+  "synthetic_fields": [
+    "created_at",
+    "converted_at",
+    "days_to_convert",
+    "owner_id",
+    "stage",
+    "is_open",
+    "sla.*",
+    "activities.*",
+    "channel_spend.*",
+    "reps.*"
+  ],
+  "authentic_fields": [
+    "converted",
+    "lead_origin",
+    "lead_source",
+    "engagement.*",
+    "profile.*",
+    "consent.*",
+    "analysis_only.*"
+  ],
+  "leakage_quarantine": "analysis_only.* is post-hoc; exclude from any model feature set",
+  "dropped_constant_columns": [
+    "Magazine",
+    "Receive More Updates About Our Courses",
+    "Update me on Supply Chain Content",
+    "Get updates on DM Content",
+    "I agree to pay the amount through cheque"
+  ],
+  "incidents": [
+    {
+      "id": "olark_conversion_collapse",
+      "kind": "conversion_drop",
+      "segment": {
+        "lead_source": "Olark Chat"
+      },
+      "start": "2026-06-08",
+      "end": "2026-06-28",
+      "days_ago": {
+        "start": 108,
+        "end": 88
+      },
+      "should_alert": true,
+      "note": "Chat widget mis-routed transcripts. Volume flat, conversion collapses.",
+      "planted": {
+        "vol_mult": 1.0,
+        "conv_mult": 0.32,
+        "segment_base_rate": 0.2553,
+        "derived_nonconv_mult": 1.2331
+      },
+      "measured": {
+        "window_days": 21,
+        "baseline_days": 67,
+        "leads_in_window": 91,
+        "volume_per_day": {
+          "baseline": 4.597,
+          "window": 4.333,
+          "ratio": 0.943
+        },
+        "conversion_rate": {
+          "baseline": 0.2403,
+          "window": 0.0659,
+          "ratio": 0.274
+        }
+      }
+    },
+    {
+      "id": "landing_page_outage",
+      "kind": "volume_drop",
+      "segment": {
+        "lead_origin": "Landing Page Submission"
+      },
+      "start": "2026-02-09",
+      "end": "2026-02-16",
+      "days_ago": {
+        "start": 227,
+        "end": 220
+      },
+      "should_alert": true,
+      "note": "JS error on the form; submissions fail silently.",
+      "planted": {
+        "vol_mult": 0.42,
+        "conv_mult": 1.0,
+        "segment_base_rate": 0.3619,
+        "derived_nonconv_mult": 1.0
+      },
+      "measured": {
+        "window_days": 8,
+        "baseline_days": 84,
+        "leads_in_window": 42,
+        "volume_per_day": {
+          "baseline": 13.083,
+          "window": 5.25,
+          "ratio": 0.401
+        },
+        "conversion_rate": {
+          "baseline": 0.3303,
+          "window": 0.4048,
+          "ratio": 1.225
+        }
+      }
+    },
+    {
+      "id": "reference_surge",
+      "kind": "volume_surge",
+      "segment": {
+        "lead_source": "Reference"
+      },
+      "start": "2025-11-10",
+      "end": "2025-12-05",
+      "days_ago": {
+        "start": 318,
+        "end": 293
+      },
+      "should_alert": true,
+      "note": "Alumni referral push. Volume-only: Reference already converts ~92%, so there is no headroom for a conversion lift here.",
+      "planted": {
+        "vol_mult": 2.1,
+        "conv_mult": 1.0,
+        "segment_base_rate": 0.9176,
+        "derived_nonconv_mult": 1.0
+      },
+      "measured": {
+        "window_days": 26,
+        "baseline_days": 74,
+        "leads_in_window": 64,
+        "volume_per_day": {
+          "baseline": 1.324,
+          "window": 2.462,
+          "ratio": 1.859
+        },
+        "conversion_rate": {
+          "baseline": 0.8878,
+          "window": 0.9375,
+          "ratio": 1.056
+        }
+      }
+    },
+    {
+      "id": "seo_content_revamp",
+      "kind": "conversion_lift",
+      "segment": {
+        "lead_source": "Organic Search"
+      },
+      "start": "2026-07-20",
+      "end": "2026-08-05",
+      "days_ago": {
+        "start": 66,
+        "end": 50
+      },
+      "should_alert": true,
+      "note": "Rewritten landing content. Conversion LIFT - the agent must flag improvements, not only regressions.",
+      "planted": {
+        "vol_mult": 1.1,
+        "conv_mult": 1.45,
+        "segment_base_rate": 0.3778,
+        "derived_nonconv_mult": 0.7267
+      },
+      "measured": {
+        "window_days": 17,
+        "baseline_days": 63,
+        "leads_in_window": 44,
+        "volume_per_day": {
+          "baseline": 3.111,
+          "window": 2.588,
+          "ratio": 0.832
+        },
+        "conversion_rate": {
+          "baseline": 0.3571,
+          "window": 0.5682,
+          "ratio": 1.591
+        }
+      }
+    },
+    {
+      "id": "festive_lull",
+      "kind": "seasonal_benign",
+      "segment": {},
+      "start": "2025-10-18",
+      "end": "2025-10-27",
+      "days_ago": {
+        "start": 341,
+        "end": 332
+      },
+      "should_alert": false,
+      "note": "Diwali. Expected every year - the agent should NOT raise an incident.",
+      "planted": {
+        "vol_mult": 0.55,
+        "conv_mult": 1.0,
+        "segment_base_rate": 0.3854,
+        "derived_nonconv_mult": 1.0
+      },
+      "measured": {
+        "window_days": 10,
+        "baseline_days": 58,
+        "leads_in_window": 81,
+        "volume_per_day": {
+          "baseline": 17.638,
+          "window": 8.1,
+          "ratio": 0.459
+        },
+        "conversion_rate": {
+          "baseline": 0.3773,
+          "window": 0.4444,
+          "ratio": 1.178
+        }
+      }
+    },
+    {
+      "id": "google_spend_waste",
+      "kind": "efficiency_drop",
+      "segment": {
+        "lead_source": "Google"
+      },
+      "start": "2026-04-06",
+      "end": "2026-04-24",
+      "days_ago": {
+        "start": 171,
+        "end": 153
+      },
+      "should_alert": true,
+      "note": "Broad-match keyword expansion: spend 2.3x, yield flat. CAC spikes.",
+      "planted": {
+        "vol_mult": 1.08,
+        "conv_mult": 0.8,
+        "spend_mult": 2.3,
+        "segment_base_rate": 0.3992,
+        "derived_nonconv_mult": 1.1329
+      },
+      "measured": {
+        "window_days": 19,
+        "baseline_days": 84,
+        "leads_in_window": 156,
+        "volume_per_day": {
+          "baseline": 6.952,
+          "window": 8.211,
+          "ratio": 1.181
+        },
+        "conversion_rate": {
+          "baseline": 0.3955,
+          "window": 0.3205,
+          "ratio": 0.81
+        },
+        "spend_per_day": {
+          "baseline": 1803.6,
+          "window": 4765.3,
+          "ratio": 2.642
+        },
+        "cac_inr": {
+          "baseline": 655.9,
+          "window": 1810.8,
+          "ratio": 2.761
+        }
+      }
+    }
+  ]
+}
