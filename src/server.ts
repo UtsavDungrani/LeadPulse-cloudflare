@@ -1,10 +1,12 @@
 import { getAgentByName, routeAgentRequest } from "agents";
 import { AnalystAgent, type Env } from "./agents/analyst";
+import { WatchtowerAgent } from "./agents/watchtower";
 import { METRICS, METRIC_IDS } from "./semantic/metrics";
 import { DIMENSION_IDS, FIELDS } from "./semantic/fields";
 
-export { AnalystAgent };
+export { AnalystAgent, WatchtowerAgent };
 export type { Env, AnalystState, AnalystAnswer } from "./agents/analyst";
+export type { WatchtowerState } from "./agents/watchtower";
 
 const DEFAULT_SESSION = "default";
 
@@ -41,6 +43,14 @@ export default {
       const session = url.searchParams.get("session") ?? DEFAULT_SESSION;
       const agent = await getAgentByName(env.AnalystAgent, session);
       return agent.fetch(new Request(new URL("/ask", url).toString(), req));
+    }
+
+    // The Watchtower feed: what the pipeline looks like right now, without
+    // anyone having had to ask a question.
+    if (url.pathname.startsWith("/api/watch")) {
+      const agent = await getAgentByName(env.WatchtowerAgent, DEFAULT_SESSION);
+      const leaf = url.pathname.slice("/api/watch".length) || "/";
+      return agent.fetch(new Request(new URL(leaf, url).toString(), req));
     }
 
     return (

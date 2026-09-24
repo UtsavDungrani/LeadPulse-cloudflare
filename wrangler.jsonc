@@ -7,13 +7,14 @@
 
   "durable_objects": {
     "bindings": [
-      { "name": "AnalystAgent", "class_name": "AnalystAgent" }
-      // Phase 2+: { "name": "WatchtowerAgent", "class_name": "WatchtowerAgent" }
+      { "name": "AnalystAgent", "class_name": "AnalystAgent" },
+      { "name": "WatchtowerAgent", "class_name": "WatchtowerAgent" }
     ]
   },
 
   "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["AnalystAgent"] }
+    { "tag": "v1", "new_sqlite_classes": ["AnalystAgent"] },
+    { "tag": "v2", "new_sqlite_classes": ["WatchtowerAgent"] }
   ],
 
   // Workers AI binding - kept as the fallback intent generator.
@@ -31,7 +32,11 @@
     "DATA_PATH_MODE": "driver",
     "BRIDGE_URL": "http://127.0.0.1:8787",
     // "claude" | "workers-ai"
-    "LLM_PROVIDER": "claude"
+    "LLM_PROVIDER": "claude",
+    // When the Watchtower sweeps. Daily, because the detection windows are
+    // measured in days - scanning hourly re-tests the same data and spends the
+    // multiple-comparison budget for nothing.
+    "WATCH_CRON": "0 7 * * *"
   }
 
   // Secrets (never commit - use .dev.vars locally, `wrangler secret put` remotely):

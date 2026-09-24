@@ -27,13 +27,13 @@ month vs last"*, *"which rep is sitting on stale leads"*, *"why did conversions 
 |---|---|---|
 | 0 | Data foundry — clean + synthesise + export | **DONE**, imported to local Mongo |
 | 1 | Semantic layer + `AnalystAgent` + charts | **DONE** — see §9 |
-| 2 | `WatchtowerAgent` (scheduled anomaly detection) | **NEXT** |
-| 3 | `ReportAgent` (cron digests), `LeadDeskAgent` (writes, HITL) | optional |
+| 2 | `WatchtowerAgent` (scheduled anomaly detection) | **DONE** — see §10 |
+| 3 | `ReportAgent` (cron digests), `LeadDeskAgent` (writes, HITL) | **NEXT** (optional) |
 
-The question-answering path is complete and tested end to end against the local
-database. Not yet built: the React UI that renders the chart specs, and the
-model-facing half of the eval suite has run structurally but never against the
-API (no key configured). Details and exact gaps in §9.
+Both agents are complete and tested end to end against the local database.
+Not yet built: the React UI, and the model-facing half of the Phase 1 eval has
+run structurally but never against the API (no key configured). Details and
+exact gaps in §9d and §10g.
 
 ---
 
@@ -424,3 +424,178 @@ curl -s -X POST localhost:8787/api/ask -H 'content-type: application/json' \
 Every answer carries `intent` and `queries` — the typed intent that was planned and the
 exact pipelines that ran. That is the audit trail, and it is the reason to trust the
 number above it.
+
+---
+
+## 10. Phase 2 — the Watchtower
+
+### 10a. What it is
+
+A scheduled sweep that finds things without being asked. This is the half that
+justifies the Agents SDK: the Analyst is request-in / answer-out and a stateless
+Worker would do, while the Watchtower wakes itself, sweeps, remembers what it has
+already said, and only speaks when something is new.
+
+```
+src/watch/
+  stats.ts      exact Poisson and binomial tails, Benjamini-Hochberg — pure
+  detect.ts     the three detectors, difference-in-differences — pure
+  findings.ts   Finding types, deterministic phrasing, lifecycle merge — pure
+  observe.ts    date ranges -> cells, via the Phase 1 semantic layer
+  scan.ts       the sweep: windows, FDR, dedup, materiality, ranking
+src/agents/watchtower.ts
+```
+
+**No AI does any detecting.** The model writes one sentence per *newly raised*
+finding — what it probably means and what to check first. If it is unavailable
+the alert still arrives with its deterministic headline and impact line.
+
+### 10b. The hard problem, and how it is solved
+
+The foundry plants six incidents. Five should alert. `festive_lull` — a 0.46x
+volume drop — must **not**, and it sits right next to `landing_page_outage`, a
+0.40x volume drop that must. A naive "this segment is down 40% on its own
+baseline" detector cannot tell them apart, because from inside a single segment
+they are identical.
+
+**Every detector is a difference-in-differences test.** A segment is measured
+against what its own baseline predicts *after* applying the concurrent move in
+the rest of the population:
+
+```
+expected = segment_baseline_rate x window_length x market_factor
+```
+
+During the festive dip every source falls together (0.58, 0.46, 0.54, 0.23,
+0.55), the market factor absorbs the fall, and nothing is flagged. During the
+landing-page outage one origin falls alone and the divergence *is* the signal.
+
+The whole-population cell has no control by construction, so anything it finds
+is reported as a **`market_shift`** — context, never an alert. The rule stands on
+its own: nothing you own is channel-agnostic, so a uniform move is demand, not a
+fault.
+
+### 10c. Three things that were wrong before they were right
+
+Each was found by measuring, not by reasoning, and each is worth knowing before
+touching the detector.
+
+**1. Cohort maturation, per channel.** Conversion lag differs about sixfold by
+source — Reference p90 is 9 days, Organic Search 58. A trailing conversion
+window is therefore immature *unequally per segment*, which the control arm
+cannot absorb. It manufactured conversion findings everywhere. Fixed by giving
+the outcome detectors a bounded-horizon metric (`conversion_rate_21d`) and a
+window that ends `MATURATION_DAYS` in the past. The cost is stated rather than
+hidden: **volume faults surface next morning, conversion and efficiency faults
+about three weeks later.** You cannot know a lead failed to convert until it has
+had time to.
+
+**2. Simpson's paradox in the control arm.** The control was originally the
+pooled complement — all other sources added together. When Reference (92%
+conversion) surged, the pooled control *rate* climbed for purely compositional
+reasons, every other channel was measured against an inflated expectation, and
+the detector reported a Google conversion collapse that never happened, every
+day for a fortnight. Fixed with **direct standardisation**: the control's
+expectation is rebuilt member by member from each one's own baseline rate applied
+to its actual window volume. Measured effect: background finding rate
+**0.50 -> 0.17 per scan**, and the phantom fortnight disappeared entirely.
+
+**3. The SLA detector was all noise.** Rep-level breach rate is confounded by
+lead mix and load in a way this model does not capture — a rep whose channel mix
+shifts shows a real breach-rate move that is not their doing. Every firing in
+testing was a false positive and it burned a third of the multiple-comparison
+budget. It is not in the sweep. `detectRate` still handles it; re-adding it is
+one line in `SPECS`.
+
+### 10d. Other decisions worth knowing
+
+- **Exact tails, not normal approximations.** The cells that matter are the
+  small ones, which is exactly where a z-approximation starts inventing
+  significance.
+- **Benjamini-Hochberg at q=0.05 across the whole sweep.** ~50 tests at an
+  uncorrected p<0.05 is two or three false alerts every scan. Window lengths are
+  deduplicated *after* the correction — picking the best window first and testing
+  afterwards is the classic way to manufacture significance.
+- **Significance is necessary, not sufficient.** A finding must also clear a
+  materiality floor: 20% off expectation *and* 15 leads / 8 conversions. Nobody
+  wants to be woken for a precisely-measured 3% shift.
+- **Ranked by business impact, never by p-value**, and attention state is a hard
+  sort tier — once someone acknowledges a finding it drops below live ones
+  regardless of size.
+- **Lifecycle, not repetition.** new -> ongoing -> resolved, keyed on
+  `detector:dimension:member`. Re-raising the same alert every scan is the other
+  way a detector gets muted, so an ongoing finding is not re-narrated either.
+- **Reads to yesterday, never today.** A half-day of leads reads as a
+  catastrophic volume drop every single morning.
+- **Daily cron (`0 7 * * *`, `WATCH_CRON`).** The windows are measured in days;
+  hourly scans would re-test the same data and spend the correction budget for
+  nothing.
+
+### 10e. Results
+
+`npm test` — 168 assertions across 8 files.
+
+| Incident | Detected | When | Signal |
+|---|---|---|---|
+| `landing_page_outage` | yes | next morning | volume 0.61x, p=6e-9, top of feed |
+| `reference_surge` | yes | next morning | volume 1.83x, p=1e-5 |
+| `olark_conversion_collapse` | yes | +22 days | conversion 0.43x, p=2e-4, **no** volume finding |
+| `google_spend_waste` | yes | +22 days | efficiency 0.43x, p=4e-16, CAC ~3x, top of feed |
+| `seo_content_revamp` | **no** | — | below detection power — see below |
+| `festive_lull` | **correctly silent** | — | reported as `market_shift` only |
+
+**Background rate**, measured over 48 consecutive daily scans from 2025-12-23 to
+2026-02-08 (the only stretch where no planted incident falls inside any window a
+scan can see): **0.17 findings per scan, 42 of 48 scans completely silent, never
+more than 2 at once.**
+
+**The documented miss.** `seo_content_revamp` is a 1.59x conversion lift on
+Organic Search, which runs about three leads a day — roughly nine extra
+conversions over 17 days. The best two-sided p-value across every window length
+and every maturation horizon tested (including an unbounded horizon and a
+hand-aligned window) was **0.064**. Under false-discovery control across ~50
+cells it cannot clear the bar, and an operating point that admitted it would also
+raise several findings a week on quiet data. This is pinned by a test that fails
+if sensitivity ever changes, so it surfaces as a decision rather than a surprise.
+
+One honest caveat on the true positives: when a dominant segment moves, its
+neighbours move with it in the feed. During the landing-page outage, `API` reads
+as a 1.63x surge — partly a real mix shift as leads reroute, partly the control
+arm being dragged by the segment under test. Impact ranking puts the causal
+finding first, but the co-firings are there.
+
+### 10f. Try it
+
+```bash
+npx wrangler dev
+```
+
+```bash
+curl -s localhost:8787/api/watch
+```
+
+```bash
+curl -s -X POST localhost:8787/api/watch/scan -H 'content-type: application/json' -d '{"asOf":"2026-05-16T07:00:00Z"}'
+```
+
+```bash
+curl -s -X POST localhost:8787/api/watch/acknowledge -H 'content-type: application/json' -d '{"key":"efficiency:channel:Google"}'
+```
+
+`asOf` is for replaying history; the scheduled sweep uses the current time.
+
+### 10g. What is not done
+
+1. **Nothing delivers the alerts.** They sit in agent state behind `/api/watch`.
+   Email, Slack or a push is a `ReportAgent` job (Phase 3).
+2. **Baselines are not incident-aware.** A trailing baseline can contain an
+   earlier incident, which biases the expectation. Excluding known windows would
+   help and is not done.
+3. **No seasonality model.** Weekly seasonality is partly absorbed because
+   windows are multiples of seven days, but an annual model would need more than
+   14 months of data. A holiday calendar would let a `market_shift` be *named*
+   rather than merely classified.
+4. **`stage`, `owner_id` and geography are not swept.** Only `lead_source`,
+   `lead_origin` and paid `channel`.
+5. **The narration path has only ever run on Workers AI**, like the rest of the
+   project — `ANTHROPIC_API_KEY` is still commented out in `.dev.vars`.

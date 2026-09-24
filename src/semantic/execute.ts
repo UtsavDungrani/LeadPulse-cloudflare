@@ -175,6 +175,24 @@ async function runOnce(
 }
 
 /**
+ * One flat pass: no ranking, no comparison, no roll-up.
+ *
+ * The Watchtower sweeps dozens of cells per scan and needs every member of a
+ * dimension, not a top-N. Going through the same compiler keeps one definition
+ * of every metric across both agents - a detector that disagreed with the
+ * analyst about what "conversion rate" means would be worse than no detector.
+ */
+export async function runFlat(
+  ds: DataSource,
+  intent: QueryIntent,
+  range: DateRange,
+): Promise<ResultRow[]> {
+  const repNames = await repNameMap(ds, intent.dimensions.includes("owner_id"));
+  const { rows } = await runOnce(ds, intent, range, repNames, { grain: "total" });
+  return rows;
+}
+
+/**
  * Execute an intent end to end: rank, query, compare, roll up.
  */
 export async function execute(ds: DataSource, intent: QueryIntent): Promise<ResultSet> {

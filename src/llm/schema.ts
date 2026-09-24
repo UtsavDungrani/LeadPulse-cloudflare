@@ -33,3 +33,8 @@ export const NarrationSchema = z.object({
 });
 export type Narration = z.infer<typeof NarrationSchema>;
 export const NARRATION_SCHEMA = toSchema(NarrationSchema);
+
+/** The Watchtower's per-finding note. One field, because one is all it needs. */
+export const FindingNoteSchema = z.object({ note: z.string().max(600) });
+export type FindingNote = z.infer<typeof FindingNoteSchema>;
+export const FINDING_NOTE_SCHEMA = toSchema(FindingNoteSchema);

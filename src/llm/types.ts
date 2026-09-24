@@ -1,7 +1,7 @@
 import type { AgentPlan } from "../semantic/intent";
 import type { ResultSet } from "../semantic/execute";
 import type { ChartType } from "../semantic/chart";
-import type { PromptContext } from "./prompts";
+import type { FindingBrief, PromptContext } from "./prompts";
 import type { Narration } from "./schema";
 
 /**
@@ -16,6 +16,8 @@ export interface LLMProvider {
   plan(question: string, ctx: PromptContext): Promise<AgentPlan>;
   /** Computed numbers -> prose. Never sees the database. */
   narrate(question: string, result: ResultSet, allowedChartTypes: ChartType[]): Promise<Narration>;
+  /** A detected finding -> a sentence a person can act on. */
+  narrateFinding(finding: FindingBrief): Promise<string>;
 }
 
 export class LLMError extends Error {

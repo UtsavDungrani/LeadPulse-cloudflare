@@ -14,8 +14,24 @@ import type { AgentPlan } from "../semantic/intent";
 import { validateIntent, IntentError } from "../semantic/intent";
 import type { ResultSet } from "../semantic/execute";
 import type { ChartType } from "../semantic/chart";
-import { intentSystemPrompt, narrationSystemPrompt, narrationUserPrompt, type PromptContext } from "./prompts";
-import { DECLINE_SCHEMA, NARRATION_SCHEMA, NarrationSchema, RUN_QUERY_SCHEMA, type Narration } from "./schema";
+import {
+  findingSystemPrompt,
+  findingUserPrompt,
+  intentSystemPrompt,
+  narrationSystemPrompt,
+  narrationUserPrompt,
+  type FindingBrief,
+  type PromptContext,
+} from "./prompts";
+import {
+  DECLINE_SCHEMA,
+  FINDING_NOTE_SCHEMA,
+  FindingNoteSchema,
+  NARRATION_SCHEMA,
+  NarrationSchema,
+  RUN_QUERY_SCHEMA,
+  type Narration,
+} from "./schema";
 import { LLMError, type LLMProvider } from "./types";
 
 const MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
@@ -116,6 +132,18 @@ it to "decline" and fill "decline" with { reason, suggestion }. No prose, no mar
       const parsed = NarrationSchema.safeParse(out);
       if (!parsed.success) throw new LLMError("narration did not match the expected schema", "workers-ai");
       return parsed.data;
+    },
+
+    async narrateFinding(finding: FindingBrief): Promise<string> {
+      const out = await askJson(
+        runner,
+        findingSystemPrompt(),
+        findingUserPrompt(finding),
+        FINDING_NOTE_SCHEMA,
+      );
+      const parsed = FindingNoteSchema.safeParse(out);
+      if (!parsed.success) throw new LLMError("finding note did not match the expected schema", "workers-ai");
+      return parsed.data.note;
     },
   };
 }

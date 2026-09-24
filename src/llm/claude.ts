@@ -16,8 +16,23 @@ import type { AgentPlan } from "../semantic/intent";
 import { validateIntent, IntentError } from "../semantic/intent";
 import type { ResultSet } from "../semantic/execute";
 import type { ChartType } from "../semantic/chart";
-import { intentSystemPrompt, narrationSystemPrompt, narrationUserPrompt, type PromptContext } from "./prompts";
-import { DECLINE_SCHEMA, DeclineSchema, NarrationSchema, RUN_QUERY_SCHEMA, type Narration } from "./schema";
+import {
+  findingSystemPrompt,
+  findingUserPrompt,
+  intentSystemPrompt,
+  narrationSystemPrompt,
+  narrationUserPrompt,
+  type FindingBrief,
+  type PromptContext,
+} from "./prompts";
+import {
+  DECLINE_SCHEMA,
+  DeclineSchema,
+  FindingNoteSchema,
+  NarrationSchema,
+  RUN_QUERY_SCHEMA,
+  type Narration,
+} from "./schema";
 import { LLMError, type LLMProvider } from "./types";
 
 const MODEL = "claude-opus-5";
@@ -122,6 +137,19 @@ export function createClaudeProvider(apiKey: string): LLMProvider {
       const parsed = response.parsed_output;
       if (!parsed) throw new LLMError("narration did not match the expected schema", "claude");
       return parsed;
+    },
+
+    async narrateFinding(finding: FindingBrief): Promise<string> {
+      const response = await client.messages.parse({
+        model: MODEL,
+        max_tokens: 1024,
+        system: findingSystemPrompt(),
+        messages: [{ role: "user", content: findingUserPrompt(finding) }],
+        output_config: { format: zodOutputFormat(FindingNoteSchema) },
+      });
+      const parsed = response.parsed_output;
+      if (!parsed) throw new LLMError("finding note did not match the expected schema", "claude");
+      return parsed.note;
     },
   };
 }

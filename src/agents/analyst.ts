@@ -23,6 +23,7 @@ import { createProvider, refusalMessage, type LLMProvider } from "../llm";
 
 export interface Env {
   AnalystAgent: DurableObjectNamespace<AnalystAgent>;
+  WatchtowerAgent: DurableObjectNamespace<import("./watchtower").WatchtowerAgent>;
   AI: Ai;
   MONGODB_URI: string;
   MONGODB_DB_NAME: string;
@@ -30,6 +31,8 @@ export interface Env {
   BRIDGE_URL: string;
   LLM_PROVIDER: "claude" | "workers-ai";
   ANTHROPIC_API_KEY: string;
+  /** Cron for the Watchtower sweep. Empty falls back to the daily default. */
+  WATCH_CRON?: string;
 }
 
 export interface AnalystState {

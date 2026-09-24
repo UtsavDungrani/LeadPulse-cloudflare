@@ -58,6 +58,15 @@ const countWhereBoolean = (path: string): Document => ({
   $sum: { $cond: [{ $eq: [{ $type: `$${path}` }, "bool"] }, 1, 0] },
 });
 
+/**
+ * Conversion horizon for `conversion_rate_21d`, in days.
+ *
+ * 21 days covers roughly three quarters of all conversions in this dataset.
+ * Longer captures more signal per lead but delays detection; shorter makes the
+ * rate too sparse for the smaller channels.
+ */
+export const MATURATION_DAYS = 21;
+
 const SPEND_ONLY_DIMENSIONS: Readonly<Record<string, string>> = {
   lead_origin: "spend is recorded per channel, not per origin",
   stage: "spend is recorded per channel per day, not per lead",
@@ -108,6 +117,30 @@ export const METRICS = {
     description:
       "Share of leads created in the period that converted. An empty bucket is null, not 0%.",
     accumulators: { n: { $sum: 1 }, won: countWhereTrue("converted") },
+    compute: (g) => ratio(num(g.won), num(g.n)),
+    support: ["won", "n"],
+    higherIsBetter: true,
+  },
+
+  conversion_rate_21d: {
+    id: "conversion_rate_21d",
+    label: "21-day conversion rate",
+    unit: "rate",
+    engine: "leads",
+    description:
+      "Share of leads that converted within 21 days of being created. Use plain conversion_rate for reporting; this one exists because a cohort is only comparable once it has had time to convert, and conversion lag differs ~6x by channel (Reference p90 ~9 days, Organic Search p90 ~58). A bounded horizon makes recent and older cohorts measure the same thing.",
+    accumulators: {
+      n: { $sum: 1 },
+      won: {
+        $sum: {
+          $cond: [
+            { $and: [{ $eq: ["$converted", true] }, { $lte: ["$days_to_convert", MATURATION_DAYS] }] },
+            1,
+            0,
+          ],
+        },
+      },
+    },
     compute: (g) => ratio(num(g.won), num(g.n)),
     support: ["won", "n"],
     higherIsBetter: true,

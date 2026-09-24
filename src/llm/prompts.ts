@@ -156,6 +156,67 @@ Rows (${result.meta.rowCount} total, first ${Math.min(result.meta.rowCount, 60)}
 ${JSON.stringify(toNarrationTable(result), null, 1)}`;
 }
 
+/**
+ * What a Watchtower finding looks like to the narrator.
+ *
+ * Note what is not here: no raw documents, no query, no way to compute
+ * anything. The statistics decided this was worth raising; the model only puts
+ * it into a sentence a person can act on.
+ */
+export interface FindingBrief {
+  headline: string;
+  impact: string;
+  detector: string;
+  segment: string;
+  direction: "drop" | "surge";
+  kind: "incident" | "market_shift";
+  observed: number;
+  expected: number;
+  window: DateRange;
+  baseline: DateRange;
+  marketFactor: number;
+}
+
+export function findingSystemPrompt(): string {
+  return `You write the one-or-two sentence note attached to an automated alert for a
+revenue-operations team.
+
+A statistical sweep has already decided this is real and measured its size. You are not
+being asked whether it is real, and you must not recompute anything or introduce a figure
+that is not given to you.
+
+Say what it most likely means in business terms, then the single most useful thing to
+check first. Be concrete about the check - name the system, the channel, the form, the
+campaign. No preamble, no restating the headline, no hedging about statistical
+significance, no bullet points.
+
+An "incident" means this segment moved while the rest of the pipeline did not, so
+something specific to it probably changed. A "market_shift" means the whole pipeline
+moved together and nothing you own is likely at fault - say so plainly, and do not invent
+a cause.
+
+A surge is not automatically good news and a drop is not automatically bad: a volume
+surge on one channel can mean broken attribution, and a conversion lift is worth
+understanding so it can be repeated.`;
+}
+
+export function findingUserPrompt(f: FindingBrief): string {
+  const market =
+    Math.abs(f.marketFactor - 1) < 0.05
+      ? "The rest of the pipeline held steady over the same window."
+      : `The rest of the pipeline moved ${(f.marketFactor * 100 - 100).toFixed(0)}% over the same window, and that has already been allowed for.`;
+
+  return `Kind: ${f.kind}
+Detector: ${f.detector}
+Segment: ${f.segment}
+Direction: ${f.direction}
+Window: ${f.window.from} to ${f.window.to} (baseline ${f.baseline.from} to ${f.baseline.to})
+Observed: ${Math.round(f.observed)}; expected ${Math.round(f.expected)}.
+${f.headline}
+${f.impact}
+${market}`;
+}
+
 /** Shown to the user when the planner declines - no second model call needed. */
 export function refusalMessage(reason: string, suggestion: string): string {
   return suggestion ? `${reason}\n\nTry instead: ${suggestion}` : reason;
