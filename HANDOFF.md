@@ -30,11 +30,18 @@ month vs last"*, *"which rep is sitting on stale leads"*, *"why did conversions 
 | 2 | `WatchtowerAgent` (scheduled anomaly detection) | **DONE** — see §10 |
 | 3 | `ReportAgent` (cron digests), `LeadDeskAgent` (writes, HITL) | **DONE** — see §11 |
 
-All four agents are complete and tested end to end against the local database.
-The largest remaining gaps: there is still no UI, the write path has no
-authenticated actor identity, and the model path has only ever run on Workers AI
-because `ANTHROPIC_API_KEY` is commented out in `.dev.vars`. Details in §9d,
-§10g and §11g.
+All four agents are complete and tested end to end against the local database,
+and there is now a React UI over all of them (§12) with saved conversations, a
+navbar and fifteen chart forms behind one rule set (§13), and an overview answer
+for the question that names no metric (§14). Every read-out on screen is written
+by the model, and every figure in it is checked against the data before it is
+shown (§15) — `npm run dev`, then http://localhost:5173.
+
+The largest remaining gaps: **nothing is deployed** (a real URL needs Atlas, §12e),
+there is **no authenticated actor** — which now covers both the write path (§11g)
+and the conversation list (§13e) — and the model path has only ever run on Workers
+AI because `ANTHROPIC_API_KEY` is commented out in `.dev.vars`. Details in §9d,
+§10g, §11g, §12e and §13e.
 
 ---
 
@@ -275,6 +282,8 @@ but pick before building, because retry/repair logic differs between them.
 ---
 
 ## 7. Project layout
+
+> Superseded by §9a, §10a, §11 and §12. Kept for the Phase-0 context.
 
 ```
 D:\Projects\leadpulse
@@ -765,3 +774,540 @@ collection is for.
    `ActionIntent` for the desk, but its digest summary was degenerate enough
    that a quality gate now rejects a summary citing no figures at all and keeps
    the computed one.
+
+---
+
+## 12. The UI
+
+```
+index.html
+vite.config.ts
+scripts/dev.mjs            starts the Worker and Vite together
+src/client/
+  main.tsx  App.tsx        shell, tabs, theme toggle
+  api.ts                   typed against the server modules, not restated
+  charts.tsx               the ChartSpec renderer
+  styles.css               tokens; the validated data-viz palette
+  components/bits.tsx      card, table, stat tile, disclosure
+  views/Ask.tsx  Watch.tsx  DigestView.tsx  Desk.tsx
+```
+
+`npm run dev` → **http://localhost:5173**. Four tabs, one per agent.
+
+### 12a. Two processes in dev, one origin in production
+
+The obvious setup — `@cloudflare/vite-plugin`, one process — **does not work here**.
+The plugin inspects the Worker's module graph in a runner with no `require`, and
+the MongoDB driver's CJS dependencies (`punycode/` via `whatwg-url`) break it.
+
+So dev runs `wrangler dev` on 8787 and Vite on 5173, with Vite proxying `/api`.
+That costs one extra process and buys something better: the browser talks to
+exactly the Worker every integration test has been run against, not a second
+build of it. `scripts/dev.mjs` starts both and tints their output.
+
+In production there is no proxy. `npm run deploy` builds `dist/` and Wrangler
+serves it as static assets from the same Worker — verified: `/` returns the app,
+`/api/catalog` returns JSON, one origin, no CORS.
+
+### 12b. Charts
+
+`ChartSpec` was designed in Phase 1 as a typed contract so React could render
+it. `src/client/charts.tsx` is the only thing that decides *how* — no chart
+library, because the spec is narrow and hand-drawn SVG keeps the mark specs
+(2px lines, ≤24px bars, a 2px surface gap between stacked segments, a 2px
+surface ring on markers) instead of fighting a library's defaults.
+
+The palette is the validated data-viz default, run through the validator in both
+modes before a line was written:
+
+```
+light  CVD ΔE 9.1 · normal-vision ΔE 19.6 · 3 slots below 3:1 → relief required
+dark   CVD ΔE 8.4 · normal-vision ΔE 19.3 · all 8 clear 3:1
+```
+
+Rules enforced in the renderer rather than left to callers:
+
+- **Colour follows identity, never rank.** Series take slots in fixed order; a
+  filter that drops a series never repaints the survivors.
+- **Nothing past eight.** The tail folds into one grey "Other" — a ninth
+  generated hue is indistinguishable from an existing slot under CVD.
+- **One axis.** There is no code path that draws a second y-scale.
+- **The table always ships with the chart.** Three light-mode slots sit below
+  3:1 against the surface, and the relief rule for that is visible labels or a
+  table view — so it is never behind a toggle.
+- **Named categories run horizontally.** A vertical column chart has to thin or
+  rotate its labels past a handful of categories, and a category you cannot read
+  is a bar that means nothing. First build did exactly that — ten channels, five
+  labels — and it was wrong.
+- Dark mode is its own set of steps for the dark surface, not an inverted light
+  palette.
+
+### 12c. The audit trail is in the interface
+
+Every answer carries "How this was computed": the `QueryIntent` the model
+produced and every pipeline the compiler emitted from it, with per-stage
+timings. The desk shows the exact filter and `$set` you are approving, not a
+paraphrase. That is the difference between a number you are told and a number
+you can check.
+
+### 12d. Verified in a browser
+
+| View | What was exercised |
+|---|---|
+| Ask | Olark weekly — 22.2% → 4.5% → 5.3% → 9.7%, line chart, table, audit trail |
+| Ask | Conversion by channel — horizontal bars, all 10 channels labelled, top-10 note |
+| Watch | Swept in 117 ms; no incidents; the market shift shown separately with its reason |
+| Digest | Both windows, stat tiles with polarity-aware deltas, channel bars, findings |
+| Desk | *"Mark every converted lead as Won"* → **declined**, with the reason |
+| Desk | Reassignment → preview card: 45 affected, 6 already correct, exact filter and `$set` |
+
+Also checked: light and dark, 430px wide, no horizontal overflow, production
+build (77 KB gzipped) served single-origin.
+
+Two bugs the browser found and the tests could not: the tab hash was
+write-only, so the back button and a pasted `#watch` link did nothing; and the
+chart SVG used `preserveAspectRatio="none"`, which stretched axis text whenever
+the container was not exactly 900px.
+
+### 12e. What is still not done
+
+1. **Nothing is deployed.** A real URL needs Atlas — a deployed Worker cannot
+   reach `localhost:27017`. That is one connection string plus a re-import.
+2. **No authentication.** Anyone who can reach the page can approve a write.
+   This is the gap that matters most now; see §11g.
+3. **No tests on the client.** The views have been exercised in a browser, not
+   asserted in CI. The chart renderer in particular is pure and eminently
+   testable.
+4. **Hash routing, not paths.** `/#watch` is shareable; `/watch` 404s.
+5. **The digest markdown is unused by the UI** — the view renders the structured
+   digest instead. `/api/report/latest.md` still returns it for a webhook.
+6. **Still Workers AI only.** The digest summary was rejected by the quality
+   gate again during this run and fell back to the computed paragraph.
+
+---
+
+## 13. Conversations, a navbar, and the rest of the chart forms
+
+Three changes, one theme: the answer was already right, and none of it was
+reachable. A conversation could not be returned to, the views were buttons
+pretending to be a nav, and every question came back in whichever single form
+`suggestChart` had decided on.
+
+### 13a. The chart rules are now one function
+
+`compatibleCharts(spec, points)` returns every form a result can carry without
+lying about itself, and **three callers share it**: `suggestChart` picks a
+default out of that list, the narrator may swap to any other member of it, and
+the picker above each chart offers exactly it. A form that is wrong for the data
+is therefore unreachable from all three directions, and a form that is right is
+reachable from all three.
+
+The union went from six forms to fifteen:
+
+```
+line  area  stacked_area  column  bar  grouped_bar  stacked_bar
+pie  donut  treemap  funnel  timeline  heatmap  scatter  table
+```
+
+The exclusions are correctness, not taste, and each one is a real failure mode:
+
+| Rule | Why |
+|---|---|
+| No stacked rate or average | The stack total is a number that does not exist |
+| Unstacked area is single-series | Two translucent fills make a third colour that is in neither palette |
+| Part-to-whole needs at least two parts | One slice is a circle |
+| Part-to-whole needs a non-negative additive measure | A whole that can contain negative parts is not a whole |
+| Grouped bars cap at 4 series × 10 periods | Past that the bars are thinner than the gaps between them |
+| Scatter needs a comparison window | There is nothing to put on the second axis otherwise |
+
+**Being hard to read is not on that list.** The first cut of this refused a
+pie past eight categories - and then drew twelve-category treemaps and legends
+by folding the tail into one grey `Other (n)`. The cap was checking a problem
+the renderer had already solved, so ten lead sources produced no pie at all.
+Folding is a palette constraint, so it now applies to exactly the forms where
+colour carries identity: pie, donut and treemap fold at eight, and ranked bars,
+which are one colour and use position instead, show every row.
+
+The same cut offered part-to-whole *only* on categorical results. But over a
+time axis the whole is the window and the parts are the series, which is a
+different question from the one the line chart answers, not a worse version of
+it - so pie, donut, treemap and ranked bars are now offered there too, provided
+the measure totals. A rate still gets none of them, because adding conversion
+rates together produces a number that was never true of anything. Anything that
+collapses the time axis says so under the chart: *totalled across all 9
+periods, not one of them*.
+
+Every form that is **not** offered is now listed under the picker with the
+reason, from `excludedCharts` - which lives beside the rule that excluded it, so
+the two cannot drift. Some reasons are actionable: *scatter needs a comparison
+window - try asking for this month against last month*. A form that is absent
+with no explanation reads as a form that is broken.
+
+`chart.test.ts` pins the property the whole arrangement rests on: across nine
+result shapes this dataset actually produces, **whatever `suggestChart` returns
+is something `compatibleCharts` also allows**. If those two ever drift, the
+picker silently refuses to show the form the answer arrived in.
+
+The defaults were also spread out, because "every answer is a bar chart" was a
+fair complaint: a count over time is a **column** (it happened *inside* a
+bucket), a rate over time is a **line** (it is a level that carries between
+buckets), and a part-to-whole with two to five slices is a **donut**. The test
+asserts at least four distinct defaults across those nine shapes so this cannot
+quietly collapse back.
+
+New forms worth a note:
+
+- **Timeline** — one lane per series, one bubble per period, radius on the
+  square root of the value, because area is what the eye compares. It answers
+  *when* at a glance where a line chart with ten overlapping series cannot.
+- **Treemap** — squarified layout (rows grow while the worst aspect ratio in the
+  row keeps improving). This is the part-to-whole form that still reads at
+  twenty cells, which is exactly where the pie has given up.
+- **Scatter** — prior window against this one, with the diagonal as "no change".
+  It does in one glance the arithmetic a two-column table makes you do in your
+  head.
+- **Pie/donut** — labels sit *outside* the ring in text tokens on a leader line.
+  A number printed on its own wedge is unreadable on at least two of the eight
+  palette slots.
+
+One rule holds all four aggregating forms together: `sliceKey` decides what a
+point is called once its own axis is gone - every dimension it carries, or the
+period when it carries none. Getting that wrong silently merges rows that are
+not the same row, which is a wrong chart that looks fine. The first version
+keyed ranked bars on a single dimension and drew the same channel once per
+month, calling each one a category.
+
+**The allowed list is derived in the browser, never read off the answer.** Which
+forms a result can carry is a fact about the data, not about the moment it was
+narrated. The first version shipped the list inside the stored answer, and a
+conversation from an hour earlier went on refusing a pie chart that had since
+become perfectly legal. Now the same pure function runs on the same points on
+both sides, and every stored transcript picks up every later fix to the rules.
+
+Colour identity survives a form change: `toSlices` prepares pie, donut and
+treemap identically, so flipping between them never moves a category to another
+hue. The folded tail is now labelled `Other (3)` rather than `Other`, because
+this dataset has a lead source genuinely called Other and two different things
+called the same thing in one legend is a wrong chart.
+
+### 13b. Conversations
+
+Durable Objects cannot be enumerated — you address one by name, but the
+namespace will not tell you which names exist. So there is one more Durable
+Object, `SessionsAgent`, holding an index of id, title and two timestamps, while
+each transcript stays inside its own `AnalystAgent`. The index is a pointer,
+never a second copy, so it cannot disagree with what it points at.
+
+`AnalystState` now keeps the **whole answer** per turn, not a summary of it.
+Reopening a conversation has to redraw the chart, the table and the pipelines;
+keeping only the prose would mean re-running the query — charging for the same
+answer twice, against data that may have moved.
+
+Three decisions worth writing down:
+
+- **The Worker updates the index, not the Analyst.** The same response decides
+  whether a turn happened and whether the list counts one, so they cannot
+  disagree. An `error` is not a turn; a **refusal is**, because a conversation
+  where a question was asked and nothing came back is a lie about what happened.
+- **A new conversation exists in the browser before it exists on the server.**
+  It is registered when its first question lands, which keeps the list free of
+  empty conversations nobody asked anything in. The Ask view does not even fetch
+  history for an id the index has not heard of.
+- **Newest answer first.** One answer is a chart, a table and an audit trail —
+  several screens of it — so appending downwards would put every new answer
+  below a fold the reader has to scroll past.
+
+Deleting drops the pointer *and* resets the transcript behind it, in that order,
+and the button asks once first.
+
+### 13c. The navbar
+
+Links, not buttons. Each view already had an address; a button that mutates
+state cannot be opened in a new tab, bookmarked, or reached with the back
+button, and there was no reason to keep pretending. The bar spans the window,
+stays put while the page scrolls, and marks the current view on the bar itself.
+
+Below about 1000px the panel costs more width than it is worth, so it slides
+over the page from a toggle in the bar, behind a scrim.
+
+### 13d. Verified in a browser
+
+| What | Result |
+|---|---|
+| Picker, counts by month by source | Line · Timeline · Stacked bars · Stacked area · Heatmap · Table — no pie (10 series), no grouped bars (>4) |
+| Stacked area, stacked bars, timeline | All three drawn from the same scale; 2px surface gaps between segments |
+| Donut | Hole carries the total (6,240), leader-line labels at 52% / 40% / 7% |
+| Treemap | Proportional cells, labels on surface plates |
+| Scatter | Diagonal "no change", blue above it, orange below |
+| Pie over a time series | Seven sources plus `Other (3)`, captioned *totalled across all 9 periods* while the table keeps all ten rows |
+| "Why not the other 9 forms?" | Each absence explained under the picker |
+| Conversations | Asked twice, started a new one, reopened the first — both answers redrawn from the Durable Object, original 7,048 ms timing intact |
+| Navbar | Active view underlined, hash links, back button |
+| Dark mode | Navbar, panel, scrim and cards all stepped for the dark surface |
+| Production | `/`, `/assets/*.js`, `/api/sessions`, `/api/catalog` all 200 from one origin |
+
+Tests: **12 files, 241 passed**. Build: 12.0 kB CSS (3.2 gzip), 262 kB JS
+(80.8 gzip).
+
+Three bugs the browser found that the tests could not: the timeline's first
+bubble overlapped its own lane label, because the lane started at a fixed offset
+rather than one clearing the largest radius the chart can draw; a CSS escape in
+the disclosure marker came through as a control character; and the two rule
+defects above, which only showed up as *"where is the pie chart?"* in front of a
+real question with ten lead sources in it.
+
+### 13e. What is still not done
+
+Everything in §12e still stands — **nothing is deployed** and **there is still
+no authentication**, which remains the gap that matters most. Added to it:
+
+1. **Conversations are global.** With no authentication, every visitor sees
+   every conversation. Today that is one person's dataset on one laptop; the
+   moment this has a URL, the session list is the second thing that needs an
+   authenticated actor, right behind the write path.
+2. **The renderer is still untested.** `chart.test.ts` covers the *rules* -
+   which are pure and now well pinned - but not the SVG. The layout functions
+   (`squarify`, `timeScale`, `toSlices`) are pure and are the obvious next ones.
+3. **Twenty turns per conversation, fifty conversations.** Both are memory
+   bounds rather than preferences, and neither is enforced by anything except a
+   `slice`.
+4. **The picker resets to the default when a conversation is reopened.** The
+   chosen form is view state, not part of the answer, so it is not persisted.
+5. **The narrator is constrained by the rules as they stood when it ran.** Only
+   the *picker* recomputes; a stored answer's default chart type is whatever was
+   chosen at the time. That is the right way round - the narration text refers
+   to the chart it saw - but it does mean a default can look conservative next
+   to a picker that has since grown.
+
+---
+
+## 14. The overview: answering the question that names no metric
+
+Found by asking *"show me yesterday's matrix"*. The refusal that came back was
+correct - `matrix` is not a metric, and both metrics it suggested instead were
+real ones. But the question next to it was not:
+
+```
+"show me yesterday's metrics"  ->  headline: "Yesterday's Lead Creation"
+                                   intent:   metric = leads_created
+```
+
+You asked for *metrics*, plural, unspecified. It picked one of ten and presented
+the answer as though that were the question. No note, no hedge. This system
+refuses when it cannot answer - so quietly answering a **narrower** question is
+strictly worse than the refusal, and it is the one failure mode a reader cannot
+catch, because the answer looks perfect.
+
+### 14a. A third thing a plan can be
+
+`AgentPlan` was `query | refusal`. It is now `query | overview | refusal`, and
+`overview` is deliberately the smallest intent in the codebase:
+
+```ts
+OverviewIntentSchema = { dateRange, filters }
+```
+
+No `metric` - that is the entire point. No `dimensions` - an overview is a
+window. And **no `compareTo`**, which was a field until the model set it to
+`none` on the first live run and produced a card of seven numbers with no
+deltas. "How did yesterday go" is a question about a change; the comparison is
+not optional. A field that should always have one value is better removed than
+defaulted, so the comparison is now hard-coded and the model cannot decline it.
+
+`suggestChart` has no equivalent here: an overview gets **no chart**. Seven
+unrelated measures share no axis, and putting them on one is the dual-axis
+mistake with five more axes. It gets stat tiles, and the two blocks are the ones
+the weekly digest already uses, for the reason the digest already documents.
+
+### 14b. The maturation split is the whole point
+
+Reporting yesterday's conversion rate is confidently wrong - yesterday's cohort
+has barely started converting, so the number always looks like a collapse and
+always recovers. `overviewWindows` is the only decision in this feature that can
+be wrong in a way a reader would not notice, so it is pure and separately
+tested:
+
+| Asked for | Outcome tiles describe |
+|---|---|
+| yesterday (`2026-09-23`) | `2026-09-03` — same length, lagged past `MATURATION_DAYS` |
+| last week | the equivalent week ending `2026-09-03` |
+| June 2026 | June 2026 — already mature, nothing is shifted |
+
+The card says which window it used, and why, in both the heading and the note.
+
+### 14c. Every tile is an ordinary query
+
+There is no new query path and no new arithmetic. Each tile builds a normal
+`QueryIntent` and runs it through the same compiler, so all sixteen pipelines
+appear in the audit trail under "How this was computed".
+
+That reuse also supplies the filter rule for free: `cpl` and `cac` read
+`channel_spend` and cannot be filtered by a lead field. Rather than reimplement
+that, a metric is in the overview **exactly when `validateIntent` accepts a
+query for it**, and anything it rejects is dropped with a note naming it. The
+rule cannot drift from the single-metric path because it *is* the single-metric
+path.
+
+The summary is computed, not written. Seven numbers and their deltas are
+described by arithmetic, and a model asked to describe them reaches for a cause
+it cannot see. It is polarity-aware - *up* is not *good* until you know the
+metric - and when every move went the same way it says so once at the end
+rather than tagging each one.
+
+### 14d. What the first live run broke
+
+The Workers AI planner padded `filters` with an `is_not_null` on **every field
+it could name**, including a spend field. Each metric then failed validation
+individually and the overview came back with no tiles at all - an empty card
+that reads like a working answer.
+
+Three fixes, in order of how much they matter:
+
+1. **`validateOverview` rejects a filter set spanning both collections.** No
+   metric reads both, so such a set can only ever report nothing. Rejecting it
+   turns a blank card into a repair prompt the planner can act on.
+2. **The `filters` field describes itself** - *"almost always empty; never add a
+   filter the question did not ask for"* - which reaches the model through the
+   generated JSON Schema, not just the system prompt.
+3. **A loud note if the live block is ever empty anyway.** It should now be
+   unreachable; an empty card that looks like an answer is worth being noisy
+   about if it is not.
+
+### 14e. Verified
+
+| Question | Result |
+|---|---|
+| `show me yesterday's metrics` | Overview, 7 tiles, outcomes lagged to `2026-09-03`, 16 pipelines |
+| `how did last week go` | Overview with deltas on every tile |
+| `how are we doing this month` | Overview, `2026-09-01` to `2026-09-24` |
+| `leads created yesterday` | **Still a single-metric answer** — the "prefer run_query" rule holds |
+| `show me yesterday's matrix` | Still refused, correctly |
+
+In the browser: polarity colours right (leads −29% red, cost per lead −12%
+green, SLA breach −6% green), both blocks headed with their own window.
+
+Tests: **13 files, 266 passed** — 20 new, covering the window arithmetic, the
+block membership, the filter rules and the summary's phrasing.
+
+### 14f. What is still not done
+
+1. **The overview cannot be broken down.** It is one window, no dimensions. "How
+   did yesterday go, by channel" is seven charts, and that is a different
+   feature.
+2. **A follow-up cannot patch it.** `lastIntent` is deliberately left untouched
+   by an overview - there is no single metric for "now break that down by city"
+   to patch - so a follow-up patches whatever single-metric question came
+   before it, not the overview.
+3. **The metric list is fixed.** Seven metrics, chosen here rather than by the
+   question. `touches_to_convert`, `leads_converted` and the raw
+   `conversion_rate` are deliberately absent; the last one because it counts
+   conversions whenever they happened, which is a different kind of wrong from
+   the one the maturation lag fixes.
+4. **The planner's choice between `run_query` and `overview` is untested at the
+   model level.** The golden eval cases in `src/evals` have never been run
+   against Claude, and this adds a third branch for them to get wrong.
+
+---
+
+## 15. Every read-out is written by the model, and every figure in it is checked
+
+The overview shipped in §14 wrote its own summary from the numbers, and said so
+on the card. That was the wrong call: the prose a reader sees should come from
+the model. Making that true without letting invented numbers through is the
+whole of this section.
+
+### 15a. The guard is what makes the request safe to grant
+
+`src/llm/figures.ts` — `checkFigures(prose, brief)` extracts every number from
+both and fails if the prose contains one the brief did not. It normalises
+thousands separators and trailing zeros, and ignores units, because it is the
+digits that can be invented:
+
+```
+brief: "Leads created: 181 (prior window 169, +7%)"
+"Leads rose 7% to 181"     ok
+"Leads rose to 212"        rejected - 212 was never in the data
+"Leads were up 12%"        rejected - the model recomputed and got it wrong
+```
+
+It is a containment check, not a proof: a model can still attach a real number
+to the wrong label. What it makes impossible is the failure that actually
+matters, which is a confident, plausible, entirely invented figure sitting in a
+sentence that reads exactly like the true ones around it.
+
+It now runs on **both** narration paths - the single-metric answer and the
+overview. A rejection falls back to the computed summary and says so on the
+card, naming the figures that caused it. The card always states which it is
+getting:
+
+> Written by the model, over figures it was handed and could not recompute.
+> Every number in it was checked against the data below.
+
+This is the `allowedFigures` idea the eval suite scaffolded in Phase 1 and never
+enforced. It is enforced now, at runtime, on every answer.
+
+### 15b. Getting the fallback model to actually answer
+
+`narrateOverview` was added to the provider interface and both implementations.
+On first measurement the free Workers AI model produced a usable read-out
+**four times in six** - the rest fell back to the computed summary, which is not
+what anyone asked to read. Three fixes, each found by making the failure say
+what it was rather than guessing:
+
+1. **One retry** on the prose-only calls. Planning does not get one - a bad
+   intent is repaired by feeding the validation error back, which beats a blind
+   retry - but a malformed *narration* has nothing to feed back.
+2. **Salvage JSON with prose around it.** The model answers a `json_schema`
+   request with a fenced block or a sentence of preamble often enough to matter.
+   `firstJsonObject` scans for the outermost balanced braces, ignoring anything
+   inside a string literal.
+3. **Close a string the model forgot to close.** The actual live failure, once
+   the error carried the payload: `561 chars, ends: ...converted into
+   customers.}` — a complete sentence, a closing brace, and no closing quote
+   between them. Closing it guesses at nothing; `JSON.parse` still has to
+   accept the result. It **refuses** when the text does not end on sentence
+   punctuation, because that means the response was cut off mid-thought, and
+   half a sentence presented as a finished read-out is worse than none.
+
+After all three: **eight for eight**. The salvage rules have enough edge cases -
+braces inside strings, escaped quotes, genuine truncation - that they are unit
+tested directly rather than through a live call, which would test the model
+instead of the rule.
+
+### 15c. Two diagnostics that were lying
+
+- **The status endpoint reported the configured provider, not the resolved
+  one.** `LLM_PROVIDER` is `claude`, `ANTHROPIC_API_KEY` is commented out, so
+  Workers AI is what answers - and `/agents/analyst-agent/default` said
+  `llm: "claude"` anyway. It now reports both `llm` (what answered) and
+  `llmRequested` (what was asked for).
+- **"Narration was unavailable" hid the reason.** A malformed response, a
+  refusal and an exhausted quota are different problems wanting different fixes.
+  The note now carries the message, which is how 15b's third fix was found at
+  all.
+
+### 15d. The free tier is finite
+
+Measuring the pass rate above burned through the Workers AI daily allocation
+(10,000 neurons). The binding throws `4006` and tells you to buy a Cloudflare
+plan, which is not the cheapest fix available here, so that error is now caught
+and re-thrown naming the one this project already has:
+
+> …this is the free fallback model. It resets daily; to carry on now, put
+> `ANTHROPIC_API_KEY` in `.dev.vars` and restart. `LLM_PROVIDER` is already
+> `"claude"`, so nothing else needs changing.
+
+### 15e. What is still not done
+
+1. **The quality of the prose is the fallback model's.** It passes the figure
+   check and still writes flatly, and it reads polarity from the metric
+   registry rather than from sense - it called a high count of stale leads
+   "good for the business" because `open_pipeline` is registered as
+   higher-is-better. Claude was what the prompts were written for.
+2. **The figure check cannot catch a real number against the wrong label.**
+   That needs the narration to cite which tile each figure came from, which is a
+   bigger change to the narration schema.
+3. **Computed fallbacks still exist, and should.** A model that fails, refuses
+   or invents a figure must not take the answer down with it. The card says
+   plainly when it fell back, which is the honest version of granting this
+   request rather than the absolute one.

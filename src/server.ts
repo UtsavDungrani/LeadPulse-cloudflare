@@ -3,14 +3,16 @@ import { AnalystAgent, type Env } from "./agents/analyst";
 import { WatchtowerAgent } from "./agents/watchtower";
 import { ReportAgent } from "./agents/report";
 import { LeadDeskAgent } from "./agents/leaddesk";
+import { SessionsAgent } from "./agents/sessions";
 import { METRICS, METRIC_IDS } from "./semantic/metrics";
 import { DIMENSION_IDS, FIELDS } from "./semantic/fields";
 
-export { AnalystAgent, WatchtowerAgent, ReportAgent, LeadDeskAgent };
+export { AnalystAgent, WatchtowerAgent, ReportAgent, LeadDeskAgent, SessionsAgent };
 export type { Env, AnalystState, AnalystAnswer } from "./agents/analyst";
 export type { WatchtowerState } from "./agents/watchtower";
 export type { ReportState } from "./agents/report";
 export type { LeadDeskState } from "./agents/leaddesk";
+export type { SessionsState, SessionMeta } from "./agents/sessions";
 
 const DEFAULT_SESSION = "default";
 
@@ -41,12 +43,60 @@ export default {
       });
     }
 
-    // Convenience route for the UI and for curl: one shared session unless a
-    // `session` query param names another.
-    if (url.pathname === "/api/ask" && req.method === "POST") {
+    /**
+     * One conversation per `session`, defaulting to a shared one so curl still
+     * works without picking a name.
+     *
+     * POST asks; GET returns that conversation's transcript. The index is
+     * updated here rather than inside the Analyst, so the two can never
+     * disagree about whether a turn happened - the same response decides both.
+     */
+    if (url.pathname === "/api/ask") {
       const session = url.searchParams.get("session") ?? DEFAULT_SESSION;
       const agent = await getAgentByName(env.AnalystAgent, session);
-      return agent.fetch(new Request(new URL("/ask", url).toString(), req));
+
+      if (req.method !== "POST") {
+        return agent.fetch(new Request(new URL("/history", url).toString(), { method: "GET" }));
+      }
+
+      const body = await req.text();
+      const response = await agent.fetch(
+        new Request(new URL("/ask", url).toString(), {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body,
+        }),
+      );
+      const answer = (await response.json()) as { ok?: boolean; kind?: string };
+      // An error is not a turn: the Analyst does not add it to the transcript,
+      // so the index must not count it either. A refusal *is* a turn.
+      if (!(answer.ok === false && answer.kind === "error")) {
+        const question = (JSON.parse(body || "{}") as { question?: string }).question ?? "";
+        await touchSession(env, url, session, question);
+      }
+      return Response.json(answer, { status: response.status });
+    }
+
+    // The conversation list. Deleting drops the pointer and resets the
+    // transcript it pointed at, in that order - a list entry with no
+    // conversation behind it is worse than a conversation with no entry.
+    if (url.pathname.startsWith("/api/sessions")) {
+      if (url.pathname.endsWith("/delete") && req.method === "POST") {
+        const body = (await req.json().catch(() => ({}))) as { id?: string };
+        if (body.id) {
+          const analyst = await getAgentByName(env.AnalystAgent, body.id);
+          await analyst.fetch(new Request(new URL("/reset", url).toString(), { method: "POST" }));
+        }
+        const index = await getAgentByName(env.SessionsAgent, DEFAULT_SESSION);
+        return index.fetch(
+          new Request(new URL("/delete", url).toString(), {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(body),
+          }),
+        );
+      }
+      return forward(env.SessionsAgent, "/api/sessions", url, req);
     }
 
     // The Watchtower feed: what the pipeline looks like right now, without
@@ -73,10 +123,21 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
+async function touchSession(env: Env, url: URL, id: string, question: string): Promise<void> {
+  const index = await getAgentByName(env.SessionsAgent, DEFAULT_SESSION);
+  await index.fetch(
+    new Request(new URL("/touch", url).toString(), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id, question }),
+    }),
+  );
+}
+
 /**
  * Route a prefixed path to one agent, preserving the leaf.
  *
- * The state parameter is left open: these four agents hold unrelated state
+ * The state parameter is left open: these agents hold unrelated state
  * shapes and this function only ever calls `fetch` on the stub.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

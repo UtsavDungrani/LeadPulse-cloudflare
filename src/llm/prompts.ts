@@ -16,6 +16,7 @@ import { calendarAnchors, type DateRange } from "../semantic/dates";
 import type { ResultSet } from "../semantic/execute";
 import { toNarrationTable } from "../semantic/execute";
 import type { ChartType } from "../semantic/chart";
+import type { OverviewResult } from "../semantic/overview";
 
 export interface PromptContext {
   /** "Now" for relative-date resolution. */
@@ -58,9 +59,10 @@ function anchorCatalogue(today: Date): string {
 export function intentSystemPrompt(ctx: PromptContext): string {
   return `You are the query planner for a revenue-operations analyst working a lead pipeline.
 
-Your only job is to turn a question into a QueryIntent by calling \`run_query\`, or to
-decline by calling \`decline\`. You never compute numbers and you never write database
-queries - a deterministic compiler does both from the intent you produce.
+Your only job is to turn a question into a QueryIntent by calling \`run_query\`, into a
+window by calling \`overview\`, or to decline by calling \`decline\`. You never compute
+numbers and you never write database queries - a deterministic compiler does both from
+the intent you produce.
 
 # Metrics
 ${metricCatalogue()}
@@ -95,6 +97,25 @@ a comparison ("vs last month", "compared to", "did it drop") and leave it \`none
 - \`limit\` caps the series or rows kept; 10 is a sensible default, 5 for a chart.
 - Prefer the narrowest set of dimensions that answers the question. Two is the maximum.
 
+# When to answer with an overview
+Call \`overview\` when the question asks how things are going without naming a metric -
+"how did yesterday go", "show me last week's numbers", "give me a summary", "what do
+the metrics look like". It returns the headline metrics for one window: volume, cost
+per lead, SLA, open pipeline, and - for a window old enough to have converted -
+conversion, CAC and time to convert. It takes a \`dateRange\` and
+optional \`filters\`; there is no metric to choose, no dimensions, and no choice about
+comparing - it always reports against the window before.
+
+Leave \`filters\` empty unless the question names a segment ("how did Google do last
+week"). Do not pad it. A filter the question did not ask for changes every number on
+the card, and a set that mixes lead fields with spend fields is rejected outright.
+
+**Prefer \`run_query\` whenever the question names a metric, even loosely.** One number
+with a chart and a breakdown beats seven in outline. \`overview\` is for the question
+that genuinely does not pick one - never as a way of avoiding the choice when the
+question made it for you. If the question names a metric *and* asks broadly ("how are
+we doing on conversion"), that is \`run_query\` on conversion.
+
 # When to decline
 Call \`decline\` when the question needs something this data does not contain - revenue,
 lifetime value, deal size, margin, headcount, anything about individual named people,
@@ -112,6 +133,61 @@ ${JSON.stringify(previous, null, 2)}
 If the question is a follow-up ("now break that down by city", "same for last month",
 "what about Google"), start from this intent and change only the fields the follow-up
 asks about. Keep everything else identical.`;
+}
+
+/**
+ * The brief for an overview: every figure the model is allowed to use, and
+ * nothing else. What is not in here cannot appear in the read-out - see
+ * `checkFigures`, which enforces exactly that.
+ */
+export function overviewBrief(question: string, r: OverviewResult): string {
+  const block = (title: string, tiles: OverviewResult["live"]) =>
+    tiles.length === 0
+      ? ""
+      : `${title}\n${tiles
+          .map(
+            (t) =>
+              `- ${t.label}: ${t.formatted} (prior window ${t.priorFormatted}` +
+              `${t.changePct === null ? "" : `, ${t.changePct >= 0 ? "+" : ""}${t.changePct.toFixed(0)}%`}; ` +
+              `${t.higherIsBetter ? "higher is better" : "lower is better"})`,
+          )
+          .join("\n")}`;
+
+  return [
+    `The question was: ${question}`,
+    `Window: ${r.period.from} to ${r.period.to}, against ${r.priorPeriod.from} to ${r.priorPeriod.to}.`,
+    block("Measured about the window itself:", r.live),
+    block(
+      `Outcomes, for leads created ${r.maturedPeriod.from} to ${r.maturedPeriod.to}` +
+        `${r.maturedIsLagged ? " - an earlier window of the same length, because the one asked about is too recent to have converted" : ""}:`,
+      r.matured,
+    ),
+    r.notes.length > 0 ? `Notes: ${r.notes.join(" ")}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+export function overviewSystemPrompt(): string {
+  return `You write the short read-out at the top of a pipeline overview for a
+revenue-operations team.
+
+The numbers have already been computed and you are given all of them. **Use them exactly
+as formatted. Never recompute, never round differently, and never state a figure that is
+not in the brief.** A figure you invent will be detected and your whole answer discarded.
+If you want to describe something the brief does not give you a number for, say it in
+words.
+
+Say what happened, then the single thing most worth attention. Up is not good and down is
+not bad - each metric says which direction is better, so read the direction from the brief
+rather than assuming. Two to four sentences, no preamble, no bullet lists, no restating
+the question.
+
+If the outcome metrics cover a different window from the one asked about, say so plainly
+in one clause - a reader who misses that will think they are looking at the same week.
+
+\`headline\` is a short title, under twelve words, no trailing period. Lead it with the
+figure a reader would repeat.`;
 }
 
 export function narrationSystemPrompt(allowedChartTypes: readonly ChartType[]): string {

@@ -15,25 +15,40 @@ import { Agent } from "agents";
 import { createDriverDataSource } from "../db/driver";
 import { readOnly } from "../db/readonly";
 import type { DataSource } from "../db/types";
-import type { QueryIntent } from "../semantic/intent";
+import type { OverviewIntent, QueryIntent } from "../semantic/intent";
+import { overviewSummary, runOverview, type OverviewResult } from "../semantic/overview";
 import { execute, type ResultSet, type ResultRow } from "../semantic/execute";
-import { applyChartChoice, chartTypeIsNegotiable, suggestChart, type ChartSpec } from "../semantic/chart";
+import {
+  applyChartChoice,
+  compatibleCharts,
+  suggestChart,
+  type ChartSpec,
+  type ChartType,
+} from "../semantic/chart";
 import { formatValue } from "../semantic/metrics";
 import { fmtDay, type DateRange } from "../semantic/dates";
-import { createProvider, refusalMessage, type LLMProvider } from "../llm";
+import {
+  checkFigures,
+  createProvider,
+  narrationUserPrompt,
+  overviewBrief,
+  refusalMessage,
+  usableProse,
+  type LLMProvider,
+} from "../llm";
 
 export interface Env {
   AnalystAgent: DurableObjectNamespace<AnalystAgent>;
   WatchtowerAgent: DurableObjectNamespace<import("./watchtower").WatchtowerAgent>;
   ReportAgent: DurableObjectNamespace<import("./report").ReportAgent>;
   LeadDeskAgent: DurableObjectNamespace<import("./leaddesk").LeadDeskAgent>;
+  SessionsAgent: DurableObjectNamespace<import("./sessions").SessionsAgent>;
   AI: Ai;
   MONGODB_URI: string;
   MONGODB_DB_NAME: string;
   DATA_PATH_MODE: "bridge" | "driver";
   BRIDGE_URL: string;
-  LLM_PROVIDER: "claude" | "workers-ai";
-  ANTHROPIC_API_KEY: string;
+  LLM_PROVIDER?: string;
   /** Cron for the Watchtower sweep. Empty falls back to the daily default. */
   WATCH_CRON?: string;
   /** Cron for the weekly digest. Empty falls back to Monday morning. */
@@ -44,9 +59,27 @@ export interface Env {
   REPORT_WEBHOOK_URL?: string;
 }
 
+/**
+ * One question and the whole answer to it.
+ *
+ * The full answer is kept, not a summary of it, because reopening a session has
+ * to redraw the chart, the table and the audit trail. Keeping only the prose
+ * would mean either re-running the query - charging the user twice for the same
+ * answer, against data that may have moved - or showing a transcript whose
+ * numbers cannot be checked.
+ */
+export interface AnalystTurn {
+  id: string;
+  at: string;
+  question: string;
+  answer: AnalystAnswer;
+}
+
 export interface AnalystState {
-  /** Conversation so far, rendered in the UI. */
+  /** Conversation so far, as plain text. Cheap to scan, cheap to keep. */
   messages: { role: "user" | "assistant"; text: string; at: string }[];
+  /** The rendered transcript: bounded, because each turn carries its points. */
+  turns: AnalystTurn[];
   /**
    * The last `QueryIntent` this session compiled. Follow-ups like "now break
    * that by city" clone this and patch one field.
@@ -54,21 +87,70 @@ export interface AnalystState {
   lastIntent: QueryIntent | null;
 }
 
+/**
+ * How many answers a session redraws. Each turn carries its own points, so this
+ * is a memory bound, not a preference - twenty answers of a few hundred rows is
+ * comfortable inside a Durable Object, two hundred is not.
+ */
+const MAX_TURNS = 20;
+
 export interface AnswerTable {
   columns: { key: string; label: string }[];
   rows: Record<string, string>[];
 }
 
+/**
+ * The numeric series behind the chart.
+ *
+ * Separate from `table`, which is formatted for reading. A renderer needs the
+ * numbers; a reader needs "22.2%". Shipping only the table would force the UI to
+ * parse its own display strings back into floats, which is exactly the kind of
+ * round-trip that puts a wrong number on a screen.
+ */
+export interface AnswerPoint {
+  period: string | null;
+  dims: Record<string, string>;
+  value: number | null;
+  formatted: string;
+  comparison: number | null;
+}
+
 export type AnalystAnswer =
   | {
       ok: true;
+      /**
+       * Optional because answers stored before the overview existed do not
+       * carry it. Absent means the ordinary single-metric answer.
+       */
+      kind?: "answer";
       question: string;
       headline: string;
       narrative: string;
       chart: ChartSpec;
       table: AnswerTable;
+      points: AnswerPoint[];
       /** The audit trail: what was asked of the database, and why. */
       intent: QueryIntent;
+      queries: ResultSet["meta"]["queries"];
+      notes: string[];
+      timings: { planMs: number; queryMs: number; narrateMs: number; totalMs: number };
+    }
+  | {
+      /**
+       * The answer to a question that named no metric. Several numbers over one
+       * window rather than one number in detail - no chart, because seven
+       * unrelated measures on one axis is the dual-axis mistake with five more
+       * axes.
+       */
+      ok: true;
+      kind: "overview";
+      question: string;
+      headline: string;
+      narrative: string;
+      overview: OverviewResult;
+      /** Whether the prose above was written by the model or computed. */
+      summarySource: "model" | "computed";
+      intent: OverviewIntent;
       queries: ResultSet["meta"]["queries"];
       notes: string[];
       timings: { planMs: number; queryMs: number; narrateMs: number; totalMs: number };
@@ -76,7 +158,7 @@ export type AnalystAnswer =
   | { ok: false; kind: "refusal"; question: string; reason: string; suggestion: string; message: string }
   | { ok: false; kind: "error"; question: string; message: string };
 
-const INITIAL: AnalystState = { messages: [], lastIntent: null };
+const INITIAL: AnalystState = { messages: [], turns: [], lastIntent: null };
 
 export class AnalystAgent extends Agent<Env, AnalystState> {
   initialState = INITIAL;
@@ -136,8 +218,7 @@ export class AnalystAgent extends Agent<Env, AnalystState> {
 
       if (plan.kind === "refusal") {
         const message = refusalMessage(plan.reason, plan.suggestion);
-        this.remember(trimmed, message, null);
-        return {
+        const refusal: AnalystAnswer = {
           ok: false,
           kind: "refusal",
           question: trimmed,
@@ -145,10 +226,27 @@ export class AnalystAgent extends Agent<Env, AnalystState> {
           suggestion: plan.suggestion,
           message,
         };
+        // A refusal is part of the transcript. Dropping it would leave a
+        // session where a question was asked and nothing came back.
+        this.remember(trimmed, message, null, refusal);
+        return refusal;
+      }
+
+      if (plan.kind === "overview") {
+        return await this.answerOverview(trimmed, plan.overview, ctx.dataWindow, planMs, t0);
       }
 
       const result = await execute(this.data(), plan.intent);
       const chart = suggestChart(result);
+      const points = toPoints(result);
+      /*
+       * One rule set decides which forms this result can carry. It bounds what
+       * the narrator may choose here, and the browser runs the same function on
+       * the same points to build the picker - rather than being handed a list,
+       * which would freeze an answer under the rules that existed when it was
+       * written.
+       */
+      const allowedCharts = compatibleCharts(chart, points);
 
       // Narration is the one step that can fail without costing the user the
       // answer, so a failure degrades to a computed summary instead of a 500.
@@ -157,42 +255,142 @@ export class AnalystAgent extends Agent<Env, AnalystState> {
       let narrative = fallbackNarrative(result);
       let finalChart = chart;
       try {
-        const narration = await llm.narrate(trimmed, result, chartTypeIsNegotiable(chart));
-        headline = narration.headline;
-        narrative = narration.narrative;
-        finalChart = applyChartChoice(chart, narration.chartType);
-      } catch {
-        result.meta.notes.push("Narration was unavailable; this summary was generated from the numbers.");
+        const narration = await llm.narrate(trimmed, result, allowedCharts);
+        // The chart choice is safe whatever the prose does - it is checked
+        // against the compatible list, not against the sentence.
+        finalChart = applyChartChoice(chart, narration.chartType, allowedCharts);
+
+        // Same rule as the overview: the model may write the sentence, but
+        // every figure in it has to have come from the table it was given. An
+        // invented number in a true-sounding sentence is the one error a
+        // reader has no way to catch.
+        const written = `${narration.headline} ${narration.narrative}`;
+        const figures = checkFigures(written, narrationUserPrompt(trimmed, result));
+        if (figures.ok) {
+          headline = narration.headline;
+          narrative = narration.narrative;
+        } else {
+          result.meta.notes.push(
+            `The written summary was discarded: it contained ${figures.invented.length === 1 ? "a figure" : "figures"} ` +
+              `not in the result (${figures.invented.join(", ")}). This summary was generated from the numbers.`,
+          );
+        }
+      } catch (e) {
+        const why = e instanceof Error ? e.message : String(e);
+        result.meta.notes.push(`Narration was unavailable (${why}); this summary was generated from the numbers.`);
       }
       const narrateMs = Date.now() - tNarrate;
 
-      this.remember(trimmed, narrative, plan.intent);
-
-      return {
+      const answer: AnalystAnswer = {
         ok: true,
         question: trimmed,
         headline,
         narrative,
         chart: finalChart,
         table: toTable(result),
+        points,
         intent: plan.intent,
         queries: result.meta.queries,
         notes: result.meta.notes,
         timings: { planMs, queryMs: result.meta.ms, narrateMs, totalMs: Date.now() - t0 },
       };
+
+      this.remember(trimmed, narrative, plan.intent, answer);
+      return answer;
     } catch (e) {
       return { ok: false, kind: "error", question: trimmed, message: e instanceof Error ? e.message : String(e) };
     }
   }
 
-  private remember(question: string, answer: string, intent: QueryIntent | null): void {
+  /**
+   * The overview answer.
+   *
+   * The read-out is written by the model, over numbers it is handed and cannot
+   * recompute - and then checked: every figure in the prose must appear in the
+   * brief, or the whole thing is discarded for the computed summary. Wanting
+   * prose from a model and wanting the numbers in it to be true are only
+   * compatible because of that check.
+   *
+   * `lastIntent` is deliberately not touched - there is no single metric here
+   * for a follow-up like "now break that down by city" to patch, and leaving
+   * the previous one in place keeps that follow-up working.
+   */
+  private async answerOverview(
+    question: string,
+    overview: OverviewIntent,
+    dataWindow: DateRange,
+    planMs: number,
+    t0: number,
+  ): Promise<AnalystAnswer> {
+    const result = await runOverview(this.data(), overview, dataWindow.to);
+
+    const computed = overviewSummary(result);
+    let { headline, narrative } = computed;
+    let summarySource: "model" | "computed" = "computed";
+
+    const tNarrate = Date.now();
+    const brief = overviewBrief(question, result);
+    try {
+      const written = await this.provider().narrateOverview(question, brief);
+      const figures = checkFigures(`${written.headline} ${written.narrative}`, brief);
+      if (!figures.ok) {
+        // A figure that was not in the brief was invented, which is the one
+        // failure a reader cannot catch. The computed summary stands.
+        result.notes.push(
+          `The written summary was discarded: it contained ${figures.invented.length === 1 ? "a figure" : "figures"} ` +
+            `not in the data (${figures.invented.join(", ")}). This summary was computed from the numbers.`,
+        );
+      } else if (!usableProse(written.narrative)) {
+        result.notes.push("The written summary was too thin to use; this one was computed from the numbers.");
+      } else {
+        headline = written.headline || headline;
+        narrative = written.narrative;
+        summarySource = "model";
+      }
+    } catch (e) {
+      // The reason matters: a malformed response and a model that refused are
+      // different problems, and a note that hides which is a note that costs a
+      // debugging session.
+      const why = e instanceof Error ? e.message : String(e);
+      result.notes.push(`The summary could not be written (${why}); this one was computed from the numbers.`);
+    }
+    const narrateMs = Date.now() - tNarrate;
+
+    const answer: AnalystAnswer = {
+      ok: true,
+      kind: "overview",
+      question,
+      headline,
+      narrative,
+      overview: result,
+      summarySource,
+      intent: overview,
+      queries: result.queries,
+      notes: result.notes,
+      timings: { planMs, queryMs: result.ms, narrateMs, totalMs: Date.now() - t0 },
+    };
+
+    this.remember(question, narrative, null, answer);
+    return answer;
+  }
+
+  private remember(
+    question: string,
+    text: string,
+    intent: QueryIntent | null,
+    answer: AnalystAnswer,
+  ): void {
     const at = new Date().toISOString();
-    const turn: AnalystState["messages"] = [
+    const messages: AnalystState["messages"] = [
       { role: "user", text: question, at },
-      { role: "assistant", text: answer, at },
+      { role: "assistant", text, at },
     ];
+    // A session persisted before `turns` existed has no `turns` key, and the
+    // spread of an undefined throws. Defaulting here is cheaper than a migration.
+    const turns = this.state.turns ?? [];
     this.setState({
-      messages: [...this.state.messages, ...turn].slice(-40),
+      messages: [...this.state.messages, ...messages].slice(-40),
+      turns: [...turns, { id: `${Date.now().toString(36)}-${turns.length}`, at, question, answer }].slice(-MAX_TURNS),
       lastIntent: intent ?? this.state.lastIntent,
     });
   }
@@ -205,6 +403,10 @@ export class AnalystAgent extends Agent<Env, AnalystState> {
       const body = (await req.json().catch(() => ({}))) as { question?: string };
       const answer = await this.ask(body.question ?? "");
       return Response.json(answer, { status: answer.ok ? 200 : 400 });
+    }
+
+    if (path.endsWith("/history")) {
+      return Response.json({ turns: this.state.turns ?? [], lastIntent: this.state.lastIntent });
     }
 
     if (path.endsWith("/reset")) {
@@ -237,11 +439,23 @@ export class AnalystAgent extends Agent<Env, AnalystState> {
       agent: "AnalystAgent",
       db: this.env.MONGODB_DB_NAME,
       dataPath: this.env.DATA_PATH_MODE,
-      llm: this.env.LLM_PROVIDER,
+      // The provider that answers.
+      llm: this.provider().name,
+      llmRequested: this.env.LLM_PROVIDER ?? "workers-ai",
       turns: this.state.messages.length,
       lastIntent: this.state.lastIntent,
     });
   }
+}
+
+function toPoints(result: ResultSet): AnswerPoint[] {
+  return result.rows.map((r) => ({
+    period: r.period,
+    dims: r.dims,
+    value: r.value,
+    formatted: r.formatted,
+    comparison: r.comparison?.value ?? null,
+  }));
 }
 
 function toTable(result: ResultSet): AnswerTable {

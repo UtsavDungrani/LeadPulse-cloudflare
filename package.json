@@ -4,18 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.mjs",
     "build": "vite build",
-    "deploy": "wrangler deploy",
+    "deploy": "vite build && wrangler deploy",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "eval:intents": "vitest run src/evals",
-    "import:data": "node scripts/import_data.mjs ./data/foundry"
+    "import:data": "node scripts/import_data.mjs ./data/foundry",
+    "dev:ui": "vite",
+    "dev:worker": "wrangler dev --port 8787"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.128.0",
     "agents": "^0.24.0",
+    "langfuse": "^3.39.2",
     "mongodb": "^7.6.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

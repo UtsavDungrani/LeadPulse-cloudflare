@@ -8,9 +8,9 @@
  *    that has quietly drifted out of sync with the registries is worse than no
  *    golden file, because it fails loudly against a correct agent.
  *  - The **model** checks call the planner once per case and are therefore
- *    opt-in and billable:
+ *    opt-in (requiring RUN_EVALS and a configured Workers AI runner):
  *
- *      RUN_EVALS=1 ANTHROPIC_API_KEY=sk-... npm run eval:intents
+ *      RUN_EVALS=1 npm run eval:intents
  *
  * Grading is on the *compiled pipeline*, not on the intent object. Two intents
  * that differ cosmetically but compile to the same query are both correct.
@@ -70,16 +70,15 @@ describe("the golden set is internally valid", () => {
   });
 });
 
-const runModel = Boolean(process.env.RUN_EVALS && process.env.ANTHROPIC_API_KEY);
+const runModel = Boolean(process.env.RUN_EVALS && (globalThis as unknown as { AI?: unknown }).AI);
 
 describe.skipIf(!runModel)("the planner produces the expected intents", () => {
-  // Built lazily: `describe` bodies run even when the suite is skipped, and
-  // constructing the provider without a key throws.
+  // Built lazily: `describe` bodies run even when the suite is skipped.
   let llm: ReturnType<typeof createProvider> | null = null;
   const planner = () =>
     (llm ??= createProvider({
-      LLM_PROVIDER: "claude",
-      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+      LLM_PROVIDER: "workers-ai",
+      AI: (globalThis as unknown as { AI?: unknown }).AI,
     }));
 
   for (const c of GOLDEN) {

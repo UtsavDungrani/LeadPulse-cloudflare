@@ -60,8 +60,36 @@ export const QueryIntentSchema = z.object({
 export type QueryIntent = z.infer<typeof QueryIntentSchema>;
 
 /** What the model produces: either a query, or a documented refusal. */
+/**
+ * The question that names no metric.
+ *
+ * "How did yesterday go" asks for the pipeline, not for one number out of it.
+ * There is deliberately no `metric` field to guess at and no `dimensions` - an
+ * overview is a window, and that is all it is. Anything more specific is a
+ * `QueryIntent`, which is a better answer whenever the question supports one.
+ *
+ * There is no `compareTo` either, and that is the same decision: "how did
+ * yesterday go" is a question about a change, so the comparison is not
+ * optional. Leaving it to the model produced overviews with no deltas at all,
+ * which is the least useful version of this answer. A field that should always
+ * have one value is better removed than defaulted.
+ */
+export const OverviewIntentSchema = z.object({
+  dateRange: z.object({ from: isoDay, to: isoDay }),
+  filters: z
+    .array(FilterSchema)
+    .max(10)
+    .describe(
+      "Almost always empty. Set it only when the question names a segment, as in " +
+        "'how did Google do last week'. Never add a filter the question did not ask for.",
+    ),
+});
+
+export type OverviewIntent = z.infer<typeof OverviewIntentSchema>;
+
 export type AgentPlan =
   | { kind: "query"; intent: QueryIntent }
+  | { kind: "overview"; overview: OverviewIntent }
   | { kind: "refusal"; reason: string; suggestion: string };
 
 export class IntentError extends Error {
@@ -130,6 +158,58 @@ export function validateIntent(raw: unknown): QueryIntent {
     if (!isSpendSourced(m) && def.source === "channel_spend") {
       throw new IntentError(`${m.label} reads leads and cannot filter on the spend field ${f.field}`);
     }
+  }
+
+  return intent;
+}
+
+/**
+ * The same checks the single-metric path applies, minus the ones about a metric
+ * there isn't one of. Whether each individual metric can carry these filters is
+ * decided per metric when the overview runs - `cpl` reads channel spend and
+ * cannot be filtered by a lead field, and dropping it is better than refusing
+ * the whole overview.
+ */
+export function validateOverview(raw: unknown): OverviewIntent {
+  const parsed = OverviewIntentSchema.safeParse(raw);
+  if (!parsed.success) {
+    const issues = parsed.error.issues
+      .map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`)
+      .join("; ");
+    throw new IntentError(`malformed OverviewIntent - ${issues}`);
+  }
+  const intent = parsed.data;
+
+  if (toDay(intent.dateRange.to) < toDay(intent.dateRange.from)) {
+    throw new IntentError(
+      `dateRange runs backwards: ${intent.dateRange.from} is after ${intent.dateRange.to}`,
+    );
+  }
+
+  const sources = new Set<string>();
+  for (const f of intent.filters) {
+    const def = field(f.field);
+    sources.add(def.source);
+    if (!opAllowedFor(def.type, f.op)) {
+      throw new IntentError(`operator "${f.op}" does not apply to ${f.field} (${def.type})`);
+    }
+    const needsValue = f.op !== "is_null" && f.op !== "is_not_null";
+    if (needsValue && f.values.length === 0) {
+      throw new IntentError(`filter on ${f.field} with op "${f.op}" needs at least one value`);
+    }
+  }
+
+  /*
+   * No metric reads both collections, so a filter set spanning both leaves
+   * every tile unrunnable and the overview empty. Rejecting it here turns a
+   * blank answer into a repair prompt, which is what caught a planner that had
+   * padded `filters` with an `is_not_null` on every field it could name.
+   */
+  if (sources.size > 1) {
+    throw new IntentError(
+      `filters mix lead fields with channel_spend fields (${[...sources].join(", ")}); ` +
+        `no single metric reads both, so nothing could be reported. Filter on one or the other, or on neither.`,
+    );
   }
 
   return intent;

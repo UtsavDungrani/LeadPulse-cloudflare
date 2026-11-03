@@ -4,7 +4,7 @@
  * constrained by cannot drift from the schema we enforce.
  */
 import { z } from "zod";
-import { QueryIntentSchema } from "../semantic/intent";
+import { OverviewIntentSchema, QueryIntentSchema } from "../semantic/intent";
 import { CHART_TYPES } from "../semantic/chart";
 import { ActionIntentSchema } from "../desk/actions";
 
@@ -20,6 +20,7 @@ function toSchema(schema: z.ZodType): Record<string, unknown> {
 }
 
 export const RUN_QUERY_SCHEMA = toSchema(QueryIntentSchema);
+export const OVERVIEW_SCHEMA = toSchema(OverviewIntentSchema);
 
 export const DeclineSchema = z.object({
   reason: z.string().max(500),
@@ -34,6 +35,17 @@ export const NarrationSchema = z.object({
 });
 export type Narration = z.infer<typeof NarrationSchema>;
 export const NARRATION_SCHEMA = toSchema(NarrationSchema);
+
+/**
+ * The overview's read-out. Narration minus the chart type, because an overview
+ * has no chart - seven unrelated measures share no axis.
+ */
+export const OverviewNarrationSchema = z.object({
+  narrative: z.string().max(2000),
+  headline: z.string().max(160),
+});
+export type OverviewNarration = z.infer<typeof OverviewNarrationSchema>;
+export const OVERVIEW_NARRATION_SCHEMA = toSchema(OverviewNarrationSchema);
 
 /** The Watchtower's per-finding note. One field, because one is all it needs. */
 export const FindingNoteSchema = z.object({ note: z.string().max(600) });

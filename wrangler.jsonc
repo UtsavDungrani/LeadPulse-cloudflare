@@ -10,18 +10,30 @@
       { "name": "AnalystAgent", "class_name": "AnalystAgent" },
       { "name": "WatchtowerAgent", "class_name": "WatchtowerAgent" },
       { "name": "ReportAgent", "class_name": "ReportAgent" },
-      { "name": "LeadDeskAgent", "class_name": "LeadDeskAgent" }
+      { "name": "LeadDeskAgent", "class_name": "LeadDeskAgent" },
+      { "name": "SessionsAgent", "class_name": "SessionsAgent" }
     ]
   },
 
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["AnalystAgent"] },
     { "tag": "v2", "new_sqlite_classes": ["WatchtowerAgent"] },
-    { "tag": "v3", "new_sqlite_classes": ["ReportAgent", "LeadDeskAgent"] }
+    { "tag": "v3", "new_sqlite_classes": ["ReportAgent", "LeadDeskAgent"] },
+    { "tag": "v4", "new_sqlite_classes": ["SessionsAgent"] }
   ],
 
   // Workers AI binding - kept as the fallback intent generator.
   "ai": { "binding": "AI" },
+
+  // The built React app, served from the same origin as the API - so there is
+  // no proxy and no CORS in production. Assets are matched before the Worker,
+  // which then handles /api/*.
+  //
+  // No `not_found_handling`: the UI routes on the hash (`/#watch`), so `/` is
+  // the only HTML path there is. An SPA fallback would be dead config here
+  // anyway - the Worker answers every path assets do not, so it is reached
+  // first.
+  "assets": { "directory": "./dist" },
 
   "vars": {
     "MONGODB_DB_NAME": "leadpulse",
@@ -34,8 +46,7 @@
     //              as the documented fallback if Atlas TLS misbehaves in prod.
     "DATA_PATH_MODE": "driver",
     "BRIDGE_URL": "http://127.0.0.1:8787",
-    // "claude" | "workers-ai"
-    "LLM_PROVIDER": "claude",
+    "LLM_PROVIDER": "workers-ai",
     // When the Watchtower sweeps. Daily, because the detection windows are
     // measured in days - scanning hourly re-tests the same data and spends the
     // multiple-comparison budget for nothing.
@@ -50,6 +61,5 @@
 
   // Secrets (never commit - use .dev.vars locally, `wrangler secret put` remotely):
   //   MONGODB_URI
-  //   ANTHROPIC_API_KEY
   //   REPORT_WEBHOOK_URL  (only when REPORT_SINK is "webhook")
 }

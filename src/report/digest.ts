@@ -210,8 +210,10 @@ function computedSummary(
   const open = findings.filter((f) => f.kind === "incident" && f.status !== "resolved");
   parts.push(
     open.length === 0
-      ? "The watchtower has nothing open."
-      : `${open.length} open finding${open.length === 1 ? "" : "s"}, the largest being: ${open[0]!.headline}.`,
+      // "Nothing open" must mean no *incidents* - a market shift may well be on
+      // screen beside this sentence, and calling that nothing reads as a bug.
+      ? "The watchtower has no incidents open."
+      : `${open.length} open incident${open.length === 1 ? "" : "s"}, the largest being: ${open[0]!.headline}.`,
   );
   return parts.join(" ");
 }
