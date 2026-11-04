@@ -71,6 +71,11 @@ describe("calendarAnchors", () => {
     expect(a.this_quarter).toEqual({ from: "2026-07-01", to: "2026-09-24" });
   });
 
+  it("reads the last year as trailing twelve months", () => {
+    expect(a.last_12_months).toEqual({ from: "2025-09-24", to: "2026-09-24" });
+    expect(a.year_to_date).toEqual({ from: "2026-01-01", to: "2026-09-24" });
+  });
+
   it("counts trailing windows inclusively", () => {
     expect(a.last_7_days).toEqual({ from: "2026-09-18", to: "2026-09-24" });
     expect(rangeDays(a.last_30_days!)).toBe(30);

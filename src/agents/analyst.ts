@@ -36,6 +36,7 @@ import {
   usableProse,
   type LLMProvider,
 } from "../llm";
+import { initTelemetry, traceAgentTurn, traceTool } from "../telemetry";
 
 export interface Env {
   AnalystAgent: DurableObjectNamespace<AnalystAgent>;
@@ -57,6 +58,9 @@ export interface Env {
   REPORT_SINK?: string;
   /** Secret. Only read when REPORT_SINK is "webhook". */
   REPORT_WEBHOOK_URL?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_BASE_URL?: string;
 }
 
 /**
@@ -199,107 +203,151 @@ export class AnalystAgent extends Agent<Env, AnalystState> {
     return (this.window = { from: fmtDay(from), to: fmtDay(to) });
   }
 
-  async ask(question: string): Promise<AnalystAnswer> {
-    const t0 = Date.now();
+  async ask(question: string, session = "default"): Promise<AnalystAnswer> {
+    initTelemetry(this.env);
     const trimmed = question.trim();
     if (!trimmed) return { ok: false, kind: "error", question, message: "Ask a question first." };
 
-    try {
-      const llm = this.provider();
-      const ctx = {
-        today: new Date(),
-        dataWindow: await this.dataWindow(),
-        previousIntent: this.state.lastIntent,
-      };
+    return traceAgentTurn(
+      "analyst-turn",
+      {
+        sessionId: session,
+        tags: ["analyst", "query"],
+        input: { question: trimmed },
+      },
+      async (turnSpan) => {
+        const t0 = Date.now();
+        try {
+          const llm = this.provider();
+          const ctx = {
+            today: new Date(),
+            dataWindow: await this.dataWindow(),
+            previousIntent: this.state.lastIntent,
+          };
 
-      const tPlan = Date.now();
-      const plan = await llm.plan(trimmed, ctx);
-      const planMs = Date.now() - tPlan;
+          const tPlan = Date.now();
+          const plan = await llm.plan(trimmed, ctx);
+          const planMs = Date.now() - tPlan;
 
-      if (plan.kind === "refusal") {
-        const message = refusalMessage(plan.reason, plan.suggestion);
-        const refusal: AnalystAnswer = {
-          ok: false,
-          kind: "refusal",
-          question: trimmed,
-          reason: plan.reason,
-          suggestion: plan.suggestion,
-          message,
-        };
-        // A refusal is part of the transcript. Dropping it would leave a
-        // session where a question was asked and nothing came back.
-        this.remember(trimmed, message, null, refusal);
-        return refusal;
-      }
+          if (plan.kind === "refusal") {
+            const message = refusalMessage(plan.reason, plan.suggestion);
+            const refusal: AnalystAnswer = {
+              ok: false,
+              kind: "refusal",
+              question: trimmed,
+              reason: plan.reason,
+              suggestion: plan.suggestion,
+              message,
+            };
+            // A refusal is part of the transcript. Dropping it would leave a
+            // session where a question was asked and nothing came back.
+            this.remember(trimmed, message, null, refusal);
+            turnSpan?.update({
+              output: refusal,
+              metadata: { kind: "refusal", ok: false },
+            });
+            return refusal;
+          }
 
-      if (plan.kind === "overview") {
-        return await this.answerOverview(trimmed, plan.overview, ctx.dataWindow, planMs, t0);
-      }
+          if (plan.kind === "overview") {
+            const overviewAns = await this.answerOverview(trimmed, plan.overview, ctx.dataWindow, planMs, t0);
+            turnSpan?.update({
+              output: overviewAns,
+              metadata: { kind: "overview", ok: overviewAns.ok },
+            });
+            return overviewAns;
+          }
 
-      const result = await execute(this.data(), plan.intent);
-      const chart = suggestChart(result);
-      const points = toPoints(result);
-      /*
-       * One rule set decides which forms this result can carry. It bounds what
-       * the narrator may choose here, and the browser runs the same function on
-       * the same points to build the picker - rather than being handed a list,
-       * which would freeze an answer under the rules that existed when it was
-       * written.
-       */
-      const allowedCharts = compatibleCharts(chart, points);
-
-      // Narration is the one step that can fail without costing the user the
-      // answer, so a failure degrades to a computed summary instead of a 500.
-      const tNarrate = Date.now();
-      let headline = fallbackHeadline(result);
-      let narrative = fallbackNarrative(result);
-      let finalChart = chart;
-      try {
-        const narration = await llm.narrate(trimmed, result, allowedCharts);
-        // The chart choice is safe whatever the prose does - it is checked
-        // against the compatible list, not against the sentence.
-        finalChart = applyChartChoice(chart, narration.chartType, allowedCharts);
-
-        // Same rule as the overview: the model may write the sentence, but
-        // every figure in it has to have come from the table it was given. An
-        // invented number in a true-sounding sentence is the one error a
-        // reader has no way to catch.
-        const written = `${narration.headline} ${narration.narrative}`;
-        const figures = checkFigures(written, narrationUserPrompt(trimmed, result));
-        if (figures.ok) {
-          headline = narration.headline;
-          narrative = narration.narrative;
-        } else {
-          result.meta.notes.push(
-            `The written summary was discarded: it contained ${figures.invented.length === 1 ? "a figure" : "figures"} ` +
-              `not in the result (${figures.invented.join(", ")}). This summary was generated from the numbers.`,
+          const result = await traceTool(
+            "execute-query",
+            {
+              input: { intent: plan.intent },
+              metadata: {
+                grain: plan.intent.dateRange,
+                limit: plan.intent.limit,
+              },
+            },
+            () => execute(this.data(), plan.intent),
           );
+          const chart = suggestChart(result);
+          const points = toPoints(result);
+          /*
+           * One rule set decides which forms this result can carry. It bounds what
+           * the narrator may choose here, and the browser runs the same function on
+           * the same points to build the picker - rather than being handed a list,
+           * which would freeze an answer under the rules that existed when it was
+           * written.
+           */
+          const allowedCharts = compatibleCharts(chart, points);
+
+          // Narration is the one step that can fail without costing the user the
+          // answer, so a failure degrades to a computed summary instead of a 500.
+          const tNarrate = Date.now();
+          let headline = fallbackHeadline(result);
+          let narrative = fallbackNarrative(result);
+          let finalChart = chart;
+          try {
+            const narration = await llm.narrate(trimmed, result, allowedCharts);
+            // The chart choice is safe whatever the prose does - it is checked
+            // against the compatible list, not against the sentence.
+            finalChart = applyChartChoice(chart, narration.chartType, allowedCharts);
+
+            // Same rule as the overview: the model may write the sentence, but
+            // every figure in it has to have come from the table it was given. An
+            // invented number in a true-sounding sentence is the one error a
+            // reader has no way to catch.
+            const written = `${narration.headline} ${narration.narrative}`;
+            const figures = checkFigures(written, narrationUserPrompt(trimmed, result));
+            if (figures.ok) {
+              headline = narration.headline;
+              narrative = narration.narrative;
+            } else {
+              result.meta.notes.push(
+                `The written summary was discarded: it contained ${figures.invented.length === 1 ? "a figure" : "figures"} ` +
+                  `not in the result (${figures.invented.join(", ")}). This summary was generated from the numbers.`,
+              );
+            }
+          } catch (e) {
+            const why = e instanceof Error ? e.message : String(e);
+            result.meta.notes.push(`Narration was unavailable (${why}); this summary was generated from the numbers.`);
+          }
+          const narrateMs = Date.now() - tNarrate;
+
+          const answer: AnalystAnswer = {
+            ok: true,
+            question: trimmed,
+            headline,
+            narrative,
+            chart: finalChart,
+            table: toTable(result),
+            points,
+            intent: plan.intent,
+            queries: result.meta.queries,
+            notes: result.meta.notes,
+            timings: { planMs, queryMs: result.meta.ms, narrateMs, totalMs: Date.now() - t0 },
+          };
+
+          this.remember(trimmed, narrative, plan.intent, answer);
+          turnSpan?.update({
+            output: answer,
+            metadata: { kind: "query", ok: true, timings: answer.timings },
+          });
+          return answer;
+        } catch (e) {
+          const errAns: AnalystAnswer = {
+            ok: false,
+            kind: "error",
+            question: trimmed,
+            message: e instanceof Error ? e.message : String(e),
+          };
+          turnSpan?.update({
+            output: errAns,
+            metadata: { kind: "error", ok: false },
+          });
+          return errAns;
         }
-      } catch (e) {
-        const why = e instanceof Error ? e.message : String(e);
-        result.meta.notes.push(`Narration was unavailable (${why}); this summary was generated from the numbers.`);
-      }
-      const narrateMs = Date.now() - tNarrate;
-
-      const answer: AnalystAnswer = {
-        ok: true,
-        question: trimmed,
-        headline,
-        narrative,
-        chart: finalChart,
-        table: toTable(result),
-        points,
-        intent: plan.intent,
-        queries: result.meta.queries,
-        notes: result.meta.notes,
-        timings: { planMs, queryMs: result.meta.ms, narrateMs, totalMs: Date.now() - t0 },
-      };
-
-      this.remember(trimmed, narrative, plan.intent, answer);
-      return answer;
-    } catch (e) {
-      return { ok: false, kind: "error", question: trimmed, message: e instanceof Error ? e.message : String(e) };
-    }
+      },
+    );
   }
 
   /**
@@ -322,7 +370,13 @@ export class AnalystAgent extends Agent<Env, AnalystState> {
     planMs: number,
     t0: number,
   ): Promise<AnalystAnswer> {
-    const result = await runOverview(this.data(), overview, dataWindow.to);
+    const result = await traceTool(
+      "run-overview",
+      {
+        input: { overview, windowTo: dataWindow.to },
+      },
+      () => runOverview(this.data(), overview, dataWindow.to),
+    );
 
     const computed = overviewSummary(result);
     let { headline, narrative } = computed;
@@ -400,8 +454,9 @@ export class AnalystAgent extends Agent<Env, AnalystState> {
     const path = url.pathname;
 
     if (req.method === "POST" && path.endsWith("/ask")) {
+      const session = url.searchParams.get("session") ?? "default";
       const body = (await req.json().catch(() => ({}))) as { question?: string };
-      const answer = await this.ask(body.question ?? "");
+      const answer = await this.ask(body.question ?? "", session);
       return Response.json(answer, { status: answer.ok ? 200 : 400 });
     }
 

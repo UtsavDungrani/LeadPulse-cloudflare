@@ -1,0 +1,105 @@
+/**
+ * The Langfuse -> LangSmith attribute translation.
+ *
+ * This is the whole reason the LangSmith export is not three lines of config.
+ * Langfuse writes `langfuse.observation.*`; LangSmith reads `gen_ai.*`,
+ * `langsmith.*` and the OpenInference `input.value`/`output.value` pair. Get
+ * the mapping wrong and traces still arrive, still nest correctly, and are
+ * still completely empty - which is exactly the failure that does not announce
+ * itself. Hence tests.
+ */
+import { describe, expect, it } from "vitest";
+import { toLangSmithAttributes } from "../langsmith";
+
+describe("toLangSmithAttributes", () => {
+  it("maps a generation to an llm run with model and tokens", () => {
+    const out = toLangSmithAttributes({
+      "langfuse.observation.type": "generation",
+      "langfuse.observation.model.name": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      "langfuse.observation.usage_details": JSON.stringify({ input: 1900, output: 125, total: 2025 }),
+    });
+
+    expect(out["langsmith.span.kind"]).toBe("llm");
+    expect(out["gen_ai.request.model"]).toBe("@cf/meta/llama-3.3-70b-instruct-fp8-fast");
+    expect(out["gen_ai.response.model"]).toBe("@cf/meta/llama-3.3-70b-instruct-fp8-fast");
+    expect(out["gen_ai.usage.input_tokens"]).toBe(1900);
+    expect(out["gen_ai.usage.output_tokens"]).toBe(125);
+    expect(out["gen_ai.usage.total_tokens"]).toBe(2025);
+  });
+
+  it("derives the token total when only the parts are reported", () => {
+    const out = toLangSmithAttributes({
+      "langfuse.observation.usage_details": JSON.stringify({ input: 10, output: 4 }),
+    });
+    expect(out["gen_ai.usage.total_tokens"]).toBe(14);
+  });
+
+  it("maps observation types onto LangSmith run types", () => {
+    const kind = (type: string) =>
+      toLangSmithAttributes({ "langfuse.observation.type": type })["langsmith.span.kind"];
+
+    expect(kind("generation")).toBe("llm");
+    expect(kind("tool")).toBe("tool");
+    expect(kind("span")).toBe("chain");
+    // An unrecognised type must still be a valid LangSmith run type, not undefined.
+    expect(kind("something-new")).toBe("chain");
+  });
+
+  it("carries input and output across as OpenInference values", () => {
+    const out = toLangSmithAttributes({
+      "langfuse.observation.input": '{"question":"leads last week"}',
+      "langfuse.observation.output": '{"kind":"query"}',
+    });
+    expect(out["input.value"]).toBe('{"question":"leads last week"}');
+    expect(out["output.value"]).toBe('{"kind":"query"}');
+  });
+
+  it("falls back to trace-level input and output", () => {
+    const out = toLangSmithAttributes({ "langfuse.trace.input": "how many leads?" });
+    expect(out["input.value"]).toBe("how many leads?");
+  });
+
+  it("prefers observation input over trace input", () => {
+    const out = toLangSmithAttributes({
+      "langfuse.observation.input": "observation",
+      "langfuse.trace.input": "trace",
+    });
+    expect(out["input.value"]).toBe("observation");
+  });
+
+  it("joins tags into the comma-separated string LangSmith expects", () => {
+    const out = toLangSmithAttributes({
+      "langfuse.trace.tags": JSON.stringify(["eval", "intent-accuracy"]),
+    });
+    expect(out["langsmith.span.tags"]).toBe("eval,intent-accuracy");
+  });
+
+  it("flattens metadata under langsmith.metadata.*", () => {
+    const out = toLangSmithAttributes({
+      "langfuse.observation.metadata": JSON.stringify({ caseId: "leads-last-week", retries: 2 }),
+      "langfuse.observation.metadata.grain": "total",
+    });
+    expect(out["langsmith.metadata.caseId"]).toBe("leads-last-week");
+    expect(out["langsmith.metadata.retries"]).toBe(2);
+    expect(out["langsmith.metadata.grain"]).toBe("total");
+  });
+
+  it("leaves the Langfuse attributes in place", () => {
+    const out = toLangSmithAttributes({ "langfuse.observation.type": "generation" });
+    expect(out["langfuse.observation.type"]).toBe("generation");
+  });
+
+  it("survives malformed JSON rather than throwing", () => {
+    const out = toLangSmithAttributes({
+      "langfuse.observation.usage_details": "{not json",
+      "langfuse.observation.metadata": "{also not json",
+    });
+    expect(out["gen_ai.usage.input_tokens"]).toBeUndefined();
+    expect(out["langsmith.metadata.caseId"]).toBeUndefined();
+  });
+
+  it("adds nothing when there is nothing to map", () => {
+    const out = toLangSmithAttributes({ "http.method": "POST" });
+    expect(out).toEqual({ "http.method": "POST" });
+  });
+});

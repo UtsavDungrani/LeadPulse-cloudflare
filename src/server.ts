@@ -6,6 +6,7 @@ import { LeadDeskAgent } from "./agents/leaddesk";
 import { SessionsAgent } from "./agents/sessions";
 import { METRICS, METRIC_IDS } from "./semantic/metrics";
 import { DIMENSION_IDS, FIELDS } from "./semantic/fields";
+import { handleEvalRequest } from "./evals/route";
 
 export { AnalystAgent, WatchtowerAgent, ReportAgent, LeadDeskAgent, SessionsAgent };
 export type { Env, AnalystState, AnalystAnswer } from "./agents/analyst";
@@ -21,6 +22,10 @@ export default {
     const url = new URL(req.url);
 
     if (url.pathname === "/health") return Response.json({ ok: true });
+
+    // The golden-set runner. Off unless EVALS_ENABLED is "true" - see evals/route.ts.
+    const evalResponse = await handleEvalRequest(req, env, url);
+    if (evalResponse) return evalResponse;
 
     /**
      * The semantic layer, described. Worth exposing: it is the contract the UI

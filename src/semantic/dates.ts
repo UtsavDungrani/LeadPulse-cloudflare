@@ -121,6 +121,10 @@ export function calendarAnchors(today: Date): Record<string, DateRange> {
     last_7_days: mk(new Date(t.getTime() - 6 * DAY_MS), t),
     last_30_days: mk(new Date(t.getTime() - 29 * DAY_MS), t),
     last_90_days: mk(new Date(t.getTime() - 89 * DAY_MS), t),
+    // "the last year" is the trailing twelve months, not the calendar year so
+    // far. Without this row the planner had no anchor for the commonest long
+    // window and improvised one, rounding to the start of the month.
+    last_12_months: mk(new Date(Date.UTC(y - 1, m, t.getUTCDate())), t),
     year_to_date: mk(new Date(Date.UTC(y, 0, 1)), t),
   };
 }

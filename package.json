@@ -11,11 +11,18 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "eval:intents": "vitest run src/evals",
+    "eval:langfuse": "node scripts/eval_langfuse.mjs",
     "import:data": "node scripts/import_data.mjs ./data/foundry",
     "dev:ui": "vite",
     "dev:worker": "wrangler dev --port 8787"
   },
   "dependencies": {
+    "@langfuse/otel": "^6.1.1",
+    "@langfuse/tracing": "^6.1.1",
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/context-async-hooks": "^3.0.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.223.0",
+    "@opentelemetry/sdk-trace-base": "^2.12.0",
     "agents": "^0.24.0",
     "langfuse": "^3.39.2",
     "mongodb": "^7.6.0",
@@ -26,6 +33,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.58.0",
     "@cloudflare/workers-types": "^5.20260924.1",
+    "@langfuse/client": "^6.1.1",
     "@types/node": "^26.6.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

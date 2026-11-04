@@ -80,22 +80,61 @@ Use \`is_null\` for "unknown"/"missing"; many profile fields are 20-55% unknown.
 # Time
 Today is ${ctx.today.toISOString().slice(0, 10)}.
 The data covers ${ctx.dataWindow.from} to ${ctx.dataWindow.to}; nothing exists outside it.
-Resolve relative phrases with this table rather than doing the arithmetic yourself:
+Resolve relative phrases with this table rather than doing the arithmetic yourself.
+Copy the row's two dates verbatim into \`dateRange\`; do not round them to the start of a
+month, and do not recompute them:
 ${anchorCatalogue(ctx.today)}
 
-\`grain\` is one of ${GRAINS.join(", ")}. Use \`total\` when the question wants a single
-number or a ranking ("which rep...", "top channels..."), and a time grain only when the
-question is about a trend or a series. Match the grain to the range: \`day\` over a year
-produces an unreadable chart - prefer \`week\` or \`month\`.
+Read the row name exactly. \`last_*\` and \`this_*\` are different rows: "last quarter" is
+the \`last_quarter\` row, which ended before the current one began, and never
+\`this_quarter\`. "The last year" / "the past 12 months" is \`last_12_months\`, a trailing
+window - \`year_to_date\` is only for "this year" or "year to date".
+
+If the question names no period at all ("is Google CAC worse than it was", "how are
+conversions looking"), use \`last_30_days\`. Do not fall back to the whole data window:
+a year of history averages away the thing being asked about.
+
+\`grain\` is one of ${GRAINS.join(", ")}. It decides one thing only: whether the answer is
+a single number per group (\`total\`) or a series over time (\`day\`/\`week\`/\`month\`/\`quarter\`).
+
+\`grain\` is NOT the name of the period being asked about. "this month", "last quarter"
+and "in June" say which dates to cover - that is \`dateRange\`, and it already carries
+them. Echoing the period back as the grain turns one figure into a one-bucket chart.
+
+Use \`total\` unless the question asks to watch something change. It does that only with
+words like trend, over time, each/per week, by week, by month, weekly, monthly,
+week over week. Worked examples:
+- "Conversion by channel this month."      -> grain total  (one number per channel)
+- "Break leads down by origin last quarter" -> grain total  (one number per origin)
+- "Weekly conversion trend"                 -> grain week
+- "Monthly lead volume by source last year" -> grain month
+- "Olark Chat conversion by week in June"   -> grain week
+
+Match a time grain to the range: \`day\` over a year produces an unreadable chart -
+prefer \`week\` or \`month\`.
 
 \`compareTo\` is one of ${COMPARE_MODES.join(", ")}. Set it whenever the question contains
 a comparison ("vs last month", "compared to", "did it drop") and leave it \`none\` otherwise.
+Default to \`previous_period\`: that is what an unqualified comparison means ("worse than
+it was", "is it dropping", "vs last month"). Use \`same_period_last_year\` only when the
+question actually says so - "versus last year", "year over year", "same month last year".
 
 # Rules
 - Split by \`lead_source\` for channel questions about leads. \`channel\` exists only for
   the spend metrics (cpl, cac) and cannot be mixed with lead dimensions.
 - \`limit\` caps the series or rows kept; 10 is a sensible default, 5 for a chart.
 - Prefer the narrowest set of dimensions that answers the question. Two is the maximum.
+- \`dimensions\` split the answer into groups to compare; \`filters\` narrow which rows are
+  counted. They are not interchangeable, and a NEW question that names ONE segment wants
+  a filter, not a split. "Leads from Mumbai", "Olark Chat conversion", "how do working
+  professionals convert" -> filter on that field and leave \`dimensions\` empty. Filtering
+  to a single value and then grouping by the same field yields one group and says nothing.
+  This applies to new questions only - a follow-up keeps whatever the previous intent
+  already had, as the "Previous query" section explains.
+- Add a dimension only when the question asks to compare ACROSS the values of a field:
+  "by channel", "by city", "which rep", "per source", "broken down by". If the question
+  names no breakdown, \`dimensions\` is empty - "Monthly cost per lead this year" is a
+  single line over time, not one line per channel.
 
 # When to answer with an overview
 Call \`overview\` when the question asks how things are going without naming a metric -
@@ -132,7 +171,12 @@ ${JSON.stringify(previous, null, 2)}
 
 If the question is a follow-up ("now break that down by city", "same for last month",
 "what about Google"), start from this intent and change only the fields the follow-up
-asks about. Keep everything else identical.`;
+asks about. Keep everything else identical.
+
+This outranks the dimension rules above. A follow-up that narrows to one segment ("just
+Google please") ADDS a filter and leaves \`dimensions\` exactly as they are - it is a
+patch, not a new question, and dropping the split would silently reshape the chart the
+reader is already looking at.`;
 }
 
 /**

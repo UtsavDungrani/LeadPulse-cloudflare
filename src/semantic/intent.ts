@@ -46,11 +46,43 @@ export type Filter = z.infer<typeof FilterSchema>;
 
 export const QueryIntentSchema = z.object({
   metric: z.enum(METRIC_IDS as [MetricId, ...MetricId[]]),
-  /** `total` collapses the whole range into one bucket per dimension combination. */
-  grain: z.enum(GRAINS),
+  /**
+   * `total` collapses the whole range into one bucket per dimension combination.
+   *
+   * The description is not decoration: this schema is handed to the model as the
+   * JSON Schema it must fill (see llm/schema.ts), and with a bare enum the only
+   * guidance it had was in the prompt. It read "this month" as a grain rather
+   * than a date range and returned one-bucket series for four golden cases.
+   */
+  grain: z
+    .enum(GRAINS)
+    .describe(
+      "Whether the answer is a single number per group, or a series over time. " +
+        "Use 'total' for one number per group - including when the question names a " +
+        "period such as 'this month' or 'last quarter', because the period is already " +
+        "carried by dateRange and is not a grain. Use a time grain only when the " +
+        "question asks to see change over time ('trend', 'over time', 'by week', " +
+        "'monthly', 'week over week').",
+    ),
   dateRange: z.object({ from: isoDay, to: isoDay }),
-  /** At most two - a third axis is unreadable in every chart type we emit. */
-  dimensions: z.array(z.enum(DIMENSION_IDS)).max(2),
+  /**
+   * At most two - a third axis is unreadable in every chart type we emit.
+   *
+   * Described for the same reason `grain` is: this schema is what the model
+   * fills in. With a bare array it read a named segment ("from Mumbai", "Olark
+   * Chat") as a split rather than a filter, and grouped by a field it had
+   * already narrowed to one value.
+   */
+  dimensions: z
+    .array(z.enum(DIMENSION_IDS))
+    .max(2)
+    .describe(
+      "Fields to split the answer by, so the groups can be compared. Leave empty " +
+        "unless the question asks to compare across a field's values ('by channel', " +
+        "'which rep', 'broken down by city'). A question naming ONE segment wants a " +
+        "filter instead - never group by a field you have filtered to a single value, " +
+        "because that yields exactly one group.",
+    ),
   filters: z.array(FilterSchema).max(10),
   compareTo: z.enum(COMPARE_MODES),
   /** Series or rows kept after ranking. */

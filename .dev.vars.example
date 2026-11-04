@@ -1,2 +1,16 @@
 MONGODB_URI="mongodb://localhost:27017/"
 ANTHROPIC_API_KEY="sk-ant-..."
+LANGFUSE_SECRET_KEY="sk-lf-..."
+LANGFUSE_PUBLIC_KEY="pk-lf-..."
+LANGFUSE_BASE_URL="https://cloud.langfuse.com"
+
+# Turns on /api/eval/* for the golden-set runner. Dev only.
+EVALS_ENABLED="true"
+
+# LangSmith, exported alongside Langfuse from the same tracer provider.
+# Leave LANGSMITH_API_KEY unset to disable it entirely.
+#   US (default)  https://api.smith.langchain.com/otel
+#   EU            https://eu.api.smith.langchain.com/otel
+LANGSMITH_API_KEY="lsv2_pt_..."
+LANGSMITH_PROJECT="leadpulse"
+LANGSMITH_ENDPOINT="https://api.smith.langchain.com/otel"

@@ -16,23 +16,10 @@
  * that differ cosmetically but compile to the same query are both correct.
  */
 import { describe, expect, it } from "vitest";
-import { compileQuery } from "../../semantic/compile";
 import { validateIntent, type QueryIntent } from "../../semantic/intent";
 import { createProvider } from "../../llm";
 import { EVAL_TODAY, GOLDEN } from "../golden";
-
-const DATA_WINDOW = { from: "2025-07-24", to: "2026-09-24" };
-
-/** Canonical form of what a question will actually ask the database. */
-function fingerprint(intent: QueryIntent): string {
-  const compiled = compileQuery(intent, intent.dateRange);
-  return JSON.stringify({
-    parts: compiled.parts,
-    grain: compiled.grain,
-    compareTo: intent.compareTo,
-    limit: intent.limit,
-  });
-}
+import { EVAL_DATA_WINDOW as DATA_WINDOW, fingerprint } from "../grade";
 
 describe("the golden set is internally valid", () => {
   it("has unique ids", () => {
