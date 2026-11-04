@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "leadpulse",
+  "account_id": "383f4d764d24ff66d8afce4af54b2a62",
   "main": "src/server.ts",
   "compatibility_date": "2026-09-24",
   "compatibility_flags": ["nodejs_compat"],

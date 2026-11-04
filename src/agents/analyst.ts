@@ -61,6 +61,9 @@ export interface Env {
   LANGFUSE_PUBLIC_KEY?: string;
   LANGFUSE_SECRET_KEY?: string;
   LANGFUSE_BASE_URL?: string;
+  LANGSMITH_API_KEY?: string;
+  LANGSMITH_PROJECT?: string;
+  LANGSMITH_ENDPOINT?: string;
 }
 
 /**

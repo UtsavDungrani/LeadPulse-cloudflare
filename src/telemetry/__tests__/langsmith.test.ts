@@ -8,8 +8,9 @@
  * still completely empty - which is exactly the failure that does not announce
  * itself. Hence tests.
  */
-import { describe, expect, it } from "vitest";
-import { toLangSmithAttributes } from "../langsmith";
+import { describe, expect, it, beforeEach } from "vitest";
+import { toLangSmithAttributes, createLangSmithProcessor } from "../langsmith";
+import { initTelemetry, resetTelemetryForTesting, telemetryDestinations } from "../index";
 
 describe("toLangSmithAttributes", () => {
   it("maps a generation to an llm run with model and tokens", () => {
@@ -101,5 +102,68 @@ describe("toLangSmithAttributes", () => {
   it("adds nothing when there is nothing to map", () => {
     const out = toLangSmithAttributes({ "http.method": "POST" });
     expect(out).toEqual({ "http.method": "POST" });
+  });
+});
+
+describe("createLangSmithProcessor", () => {
+  it("returns null when no API key is provided", () => {
+    const res = createLangSmithProcessor({});
+    expect(res).toBeNull();
+  });
+
+  it("creates processor with default endpoint and project", () => {
+    const res = createLangSmithProcessor({ LANGSMITH_API_KEY: "lsv2_pt_test" });
+    expect(res).not.toBeNull();
+    expect(res?.endpoint).toBe("https://api.smith.langchain.com/otel/v1/traces");
+    expect(res?.project).toBe("leadpulse");
+  });
+
+  it("handles custom endpoint with trailing slashes and custom project", () => {
+    const res = createLangSmithProcessor({
+      LANGSMITH_API_KEY: "lsv2_pt_test",
+      LANGSMITH_ENDPOINT: "https://eu.api.smith.langchain.com/otel///",
+      LANGSMITH_PROJECT: "leadpulse-prod",
+    });
+    expect(res).not.toBeNull();
+    expect(res?.endpoint).toBe("https://eu.api.smith.langchain.com/otel/v1/traces");
+    expect(res?.project).toBe("leadpulse-prod");
+  });
+});
+
+describe("telemetry initialization with LangSmith", () => {
+  beforeEach(() => {
+    resetTelemetryForTesting();
+  });
+
+  it("initializes standalone LangSmith when Langfuse is not configured", () => {
+    const ok = initTelemetry({
+      LANGSMITH_API_KEY: "lsv2_pt_test",
+      LANGSMITH_PROJECT: "test-proj",
+    });
+    expect(ok).toBe(true);
+    const dest = telemetryDestinations();
+    expect(dest.langfuse).toBe(false);
+    expect(dest.langsmith).toBe("https://api.smith.langchain.com/otel/v1/traces (test-proj)");
+  });
+
+  it("initializes dual-export when both are configured", () => {
+    const ok = initTelemetry({
+      LANGFUSE_PUBLIC_KEY: "pk-lf-test",
+      LANGFUSE_SECRET_KEY: "sk-lf-test",
+      LANGSMITH_API_KEY: "lsv2_pt_test",
+      LANGSMITH_PROJECT: "test-dual",
+    });
+    expect(ok).toBe(true);
+    const dest = telemetryDestinations();
+    expect(dest.langfuse).toBe(true);
+    expect(dest.langsmith).toBe("https://api.smith.langchain.com/otel/v1/traces (test-dual)");
+  });
+
+  it("returns false when neither is configured", () => {
+    const ok = initTelemetry({});
+    expect(ok).toBe(false);
+    const dest = telemetryDestinations();
+    expect(dest.langfuse).toBe(false);
+    expect(dest.langsmith).toBeNull();
   });
 });

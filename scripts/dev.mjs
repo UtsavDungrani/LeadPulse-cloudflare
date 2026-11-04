@@ -6,7 +6,20 @@
  * this process kills both.
  */
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
+
+// Load .dev.vars so wrangler dev and child processes inherit Cloudflare API credentials
+if (existsSync(".dev.vars")) {
+  for (const line of readFileSync(".dev.vars", "utf8").split(/\r?\n/)) {
+    const m = /^\s*([A-Za-z0-9_]+)\s*=\s*(.*)$/.exec(line);
+    if (!m) continue;
+    let value = m[2].trim();
+    if (value.length > 1 && (value.at(0) === '"' || value.at(0) === "'") && value.at(-1) === value.at(0)) {
+      value = value.slice(1, -1);
+    }
+    if (process.env[m[1]] === undefined) process.env[m[1]] = value;
+  }
+}
 
 // `wrangler dev` refuses to start if `assets.directory` is missing, and on a
 // fresh clone it is - the real UI comes from Vite in dev, and `dist/` only

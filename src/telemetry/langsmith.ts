@@ -191,14 +191,20 @@ export interface LangSmithProcessor {
  * extra requests.
  */
 export function createLangSmithProcessor(config: LangSmithConfig): LangSmithProcessor | null {
-  const apiKey = config.LANGSMITH_API_KEY;
+  const apiKey =
+    config.LANGSMITH_API_KEY ??
+    (typeof process !== "undefined" ? process.env.LANGSMITH_API_KEY : undefined);
   if (!apiKey) return null;
 
-  const base = (config.LANGSMITH_ENDPOINT ?? "https://api.smith.langchain.com/otel").replace(
-    /\/+$/,
-    "",
-  );
-  const project = config.LANGSMITH_PROJECT ?? "leadpulse";
+  const base = (
+    config.LANGSMITH_ENDPOINT ??
+    (typeof process !== "undefined" ? process.env.LANGSMITH_ENDPOINT : undefined) ??
+    "https://api.smith.langchain.com/otel"
+  ).replace(/\/+$/, "");
+  const project =
+    config.LANGSMITH_PROJECT ??
+    (typeof process !== "undefined" ? process.env.LANGSMITH_PROJECT : undefined) ??
+    "leadpulse";
 
   const exporter = new LangSmithTranslatingExporter(
     new OTLPTraceExporter({

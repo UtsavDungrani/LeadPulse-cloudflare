@@ -49,8 +49,13 @@ function filterCatalogue(): string {
   }).join("\n");
 }
 
-function anchorCatalogue(today: Date): string {
-  const anchors = calendarAnchors(today);
+function anchorCatalogue(today: Date, dataWindow: DateRange): string {
+  // `all_time` lives here rather than in `calendarAnchors` because it is not a
+  // calendar fact - it is however much data this deployment happens to hold.
+  // It is in the table at all because the table is the mechanism: the prompt
+  // tells the model to copy a row's dates verbatim, and a window with no row
+  // is a window the model has to improvise.
+  const anchors = { ...calendarAnchors(today), all_time: dataWindow };
   return Object.entries(anchors)
     .map(([name, r]) => `- ${name}: ${r.from} to ${r.to}`)
     .join("\n");
@@ -83,16 +88,32 @@ The data covers ${ctx.dataWindow.from} to ${ctx.dataWindow.to}; nothing exists o
 Resolve relative phrases with this table rather than doing the arithmetic yourself.
 Copy the row's two dates verbatim into \`dateRange\`; do not round them to the start of a
 month, and do not recompute them:
-${anchorCatalogue(ctx.today)}
+${anchorCatalogue(ctx.today, ctx.dataWindow)}
 
 Read the row name exactly. \`last_*\` and \`this_*\` are different rows: "last quarter" is
 the \`last_quarter\` row, which ended before the current one began, and never
 \`this_quarter\`. "The last year" / "the past 12 months" is \`last_12_months\`, a trailing
 window - \`year_to_date\` is only for "this year" or "year to date".
 
-If the question names no period at all ("is Google CAC worse than it was", "how are
-conversions looking"), use \`last_30_days\`. Do not fall back to the whole data window:
-a year of history averages away the thing being asked about.
+If the question names no period at all, which window is right depends on what is being
+asked, and there are two kinds.
+
+A question about a direction of travel - "is Google CAC worse than it was", "how are
+conversions looking", "is it dropping" - compares now against recently. Use
+\`last_30_days\`, and set \`compareTo\` to \`previous_period\`. Do not reach for the
+whole data window here: a year of history averages away the thing being asked about.
+
+A question about a standing characteristic, or about the current state of the pipeline -
+"which channel converts fastest", "how many touches does a win take", "which rep is
+sitting on the most stale leads", "what does the pipeline look like by stage" - is not
+about a period at all. Use \`all_time\`. These are answered from every lead there is:
+thirty days of wins is a thin sample, and conversion lag differs about 6x by channel, so
+a short window reports the fast channels and quietly omits the slow ones.
+
+"Right now", "currently" and "today" do not name a period in this sense. For a snapshot
+metric such as \`open_pipeline\`, \`dateRange\` says when the lead arrived, not when
+the snapshot is taken - so "what does the pipeline look like right now" is \`all_time\`,
+and never the \`today\` row.
 
 \`grain\` is one of ${GRAINS.join(", ")}. It decides one thing only: whether the answer is
 a single number per group (\`total\`) or a series over time (\`day\`/\`week\`/\`month\`/\`quarter\`).

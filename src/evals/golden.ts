@@ -125,6 +125,9 @@ export const GOLDEN: GoldenCase[] = [
   {
     id: "pipeline-by-stage",
     question: "What does the pipeline look like by stage right now?",
+    note:
+      "'Right now' is not a period. open_pipeline is a snapshot taken today and sliced by " +
+      "when the lead arrived, so dateRange is all_time, never the today row.",
     expect: q({
       metric: "open_pipeline",
       grain: "total",
@@ -237,6 +240,9 @@ export const GOLDEN: GoldenCase[] = [
   {
     id: "stale-leads-by-rep",
     question: "Which rep is sitting on the most stale leads?",
+    note:
+      "No period named: a snapshot of what is open now, so all_time. Same convention as " +
+      "pipeline-by-stage.",
     expect: q({
       metric: "open_pipeline",
       grain: "total",
@@ -263,6 +269,10 @@ export const GOLDEN: GoldenCase[] = [
   {
     id: "speed-to-convert-by-source",
     question: "Which channel converts fastest?",
+    note:
+      "No period named: a standing characteristic, so all_time. A short window flatters the " +
+      "fast channels, because the slow ones have not landed yet - lag p90 runs from ~9 days " +
+      "to ~58 by channel.",
     expect: q({
       metric: "avg_days_to_convert",
       grain: "total",
@@ -276,6 +286,10 @@ export const GOLDEN: GoldenCase[] = [
   {
     id: "touches-by-source",
     question: "How many touches does a win take, by channel?",
+    note:
+      "No period named, and none implied: how much work a win costs is a standing " +
+      "characteristic, so the window is all_time. Thirty days of wins is too thin a sample " +
+      "to rank channels on.",
     expect: q({
       metric: "touches_to_convert",
       grain: "total",
@@ -318,6 +332,10 @@ export const GOLDEN: GoldenCase[] = [
   {
     id: "google-cac-vs-previous",
     question: "Is Google CAC worse than it was?",
+    note:
+      "No period named, but it asks for a direction of travel - that is last_30_days " +
+      "against the previous period, not the whole window. The counterpart to the four " +
+      "all_time cases.",
     expect: q({
       metric: "cac",
       grain: "total",

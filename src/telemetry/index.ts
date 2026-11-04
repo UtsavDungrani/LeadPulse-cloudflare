@@ -1,6 +1,6 @@
 import api, { type TracerProvider } from "@opentelemetry/api";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
-import { BasicTracerProvider } from "@opentelemetry/sdk-trace-base";
+import { BasicTracerProvider, type SpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
 import { LangfuseSpanProcessor } from "@langfuse/otel";
 import { createLangSmithProcessor, type LangSmithConfig, type LangSmithProcessor } from "./langsmith";
@@ -25,11 +25,12 @@ export interface TelemetryConfig extends LangSmithConfig {
 }
 
 /**
- * Initialize OpenTelemetry & Langfuse SpanProcessor with provided credentials.
+ * Initialize OpenTelemetry, Langfuse, and/or LangSmith with provided credentials.
  * Idempotent: safe to call on every request or agent instantiation.
+ * Supports running Langfuse alone, LangSmith alone, or both simultaneously (dual-export).
  */
 export function initTelemetry(config?: TelemetryConfig): boolean {
-  if (initialized && enabled) return true;
+  if (initialized && enabled && (!config?.LANGSMITH_API_KEY || langsmith !== null)) return true;
 
   const publicKey =
     config?.LANGFUSE_PUBLIC_KEY ??
@@ -42,30 +43,40 @@ export function initTelemetry(config?: TelemetryConfig): boolean {
     (typeof process !== "undefined" ? process.env.LANGFUSE_BASE_URL : undefined) ??
     "https://cloud.langfuse.com";
 
-  if (!publicKey || !secretKey) {
-    return false;
-  }
-
   try {
-    const contextManager = new AsyncLocalStorageContextManager();
-    contextManager.enable();
-    api.context.setGlobalContextManager(contextManager);
+    const processors: SpanProcessor[] = [];
 
-    spanProcessor = new LangfuseSpanProcessor({
-      publicKey,
-      secretKey,
-      baseUrl,
-      exportMode: "immediate",
-    });
+    if (publicKey && secretKey) {
+      spanProcessor = new LangfuseSpanProcessor({
+        publicKey,
+        secretKey,
+        baseUrl,
+        exportMode: "immediate",
+      });
+      processors.push(spanProcessor);
+    } else {
+      spanProcessor = null;
+    }
 
-    // LangSmith, when configured, is a second processor on the SAME provider -
+    // LangSmith, when configured, is a processor on the SAME provider -
     // not a second provider. Two providers would mean two globals fighting over
     // `api.trace.setGlobalTracerProvider`, and whichever lost would silently
     // stop receiving spans. One provider, two destinations, same spans.
     langsmith = createLangSmithProcessor(config ?? {});
+    if (langsmith) {
+      processors.push(langsmith.processor);
+    }
+
+    if (processors.length === 0) {
+      return false;
+    }
+
+    const contextManager = new AsyncLocalStorageContextManager();
+    contextManager.enable();
+    api.context.setGlobalContextManager(contextManager);
 
     const provider = new BasicTracerProvider({
-      spanProcessors: langsmith ? [spanProcessor, langsmith.processor] : [spanProcessor],
+      spanProcessors: processors,
     });
 
     api.trace.setGlobalTracerProvider(provider as unknown as TracerProvider);
@@ -75,9 +86,16 @@ export function initTelemetry(config?: TelemetryConfig): boolean {
     enabled = true;
     return true;
   } catch (err) {
-    console.warn("[leadpulse/telemetry] Failed to initialize Langfuse tracing:", err);
+    console.warn("[leadpulse/telemetry] Failed to initialize telemetry tracing:", err);
     return false;
   }
+}
+
+export function resetTelemetryForTesting(): void {
+  initialized = false;
+  spanProcessor = null;
+  langsmith = null;
+  enabled = false;
 }
 
 export function isTelemetryEnabled(): boolean {
@@ -270,7 +288,7 @@ export async function flushTelemetry(): Promise<void> {
 
 /** Which backends this process is exporting to. For diagnostics. */
 export function telemetryDestinations(): { langfuse: boolean; langsmith: string | null } {
-  return { langfuse: enabled, langsmith: langsmith ? `${langsmith.endpoint} (${langsmith.project})` : null };
+  return { langfuse: spanProcessor !== null, langsmith: langsmith ? `${langsmith.endpoint} (${langsmith.project})` : null };
 }
 
 /* -------------------------------------------------------------------------- */

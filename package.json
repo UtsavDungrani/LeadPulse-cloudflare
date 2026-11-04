@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "eval:intents": "vitest run src/evals",
     "eval:langfuse": "node scripts/eval_langfuse.mjs",
+    "eval:langsmith": "node scripts/eval_langsmith.mjs",
     "import:data": "node scripts/import_data.mjs ./data/foundry",
     "dev:ui": "vite",
     "dev:worker": "wrangler dev --port 8787"
@@ -25,6 +26,7 @@
     "@opentelemetry/sdk-trace-base": "^2.12.0",
     "agents": "^0.24.0",
     "langfuse": "^3.39.2",
+    "langsmith": "^0.11.8",
     "mongodb": "^7.6.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
