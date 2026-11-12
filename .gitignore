@@ -4,3 +4,8 @@ dist/
 .dev.vars
 .env
 data/foundry/*.jsonl
+
+# Ragas eval caches: recorded agent runs and cached judge replies.
+# Local accelerators, not results - the reports in evals/reports are the output.
+evals/.judge-cache/
+evals/.runs/

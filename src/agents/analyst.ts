@@ -50,6 +50,14 @@ export interface Env {
   DATA_PATH_MODE: "bridge" | "driver";
   BRIDGE_URL: string;
   LLM_PROVIDER?: string;
+  /**
+   * Point the agent at an OpenAI-compatible endpoint instead of Workers AI.
+   * Set these and the Workers AI binding is not called at all - which is how the
+   * app keeps working once the Workers AI daily allocation is spent.
+   */
+  LLM_BASE_URL?: string;
+  LLM_MODEL?: string;
+  LLM_API_KEY?: string;
   /** Cron for the Watchtower sweep. Empty falls back to the daily default. */
   WATCH_CRON?: string;
   /** Cron for the weekly digest. Empty falls back to Monday morning. */
@@ -556,12 +564,12 @@ function titleCase(s: string): string {
 }
 
 /** Deterministic stand-ins, used when the narration call fails. */
-function fallbackHeadline(result: ResultSet): string {
+export function fallbackHeadline(result: ResultSet): string {
   const total = result.total?.formatted ?? "n/a";
   return `${result.metric.label}: ${total} (${result.range.from} to ${result.range.to})`;
 }
 
-function fallbackNarrative(result: ResultSet): string {
+export function fallbackNarrative(result: ResultSet): string {
   const parts: string[] = [];
   const total = result.total;
   if (total) {

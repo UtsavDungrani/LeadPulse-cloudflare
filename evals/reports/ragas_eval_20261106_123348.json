@@ -1,0 +1,1101 @@
+{
+  "run": "2026-11-06T12:33:48.490895",
+  "judge": "qwen2.5:32b via https://leadpulse-llm.20230905090503u.workers.dev/v1 (external, no neurons) / @cf/baai/bge-m3",
+  "cost": {
+    "neurons": 1.5,
+    "usd_if_paid": 0.0,
+    "pct_of_free_daily": 0.0,
+    "billed_calls": 225,
+    "cache_hits": 94,
+    "tokens_in": 166769,
+    "tokens_out": 24630,
+    "by_model": {
+      "@cf/baai/bge-m3": 1.5,
+      "qwen2.5:32b": 0.0
+    },
+    "budget": 9500.0,
+    "stopped_early": false,
+    "stop_reason": null
+  },
+  "summary": {
+    "faithfulness": {
+      "mean": 0.5961760461760461,
+      "min": 0.0,
+      "max": 1.0,
+      "scored": 24,
+      "indeterminate": 0,
+      "errors": 0,
+      "applicable": 24,
+      "scale": "0-1"
+    },
+    "response_groundedness": {
+      "mean": 0.9479166666666666,
+      "min": 0.25,
+      "max": 1.0,
+      "scored": 24,
+      "indeterminate": 0,
+      "errors": 0,
+      "applicable": 24,
+      "scale": "0-1"
+    },
+    "answer_relevancy": {
+      "mean": 0.6747599316946039,
+      "min": 0.33531105825205576,
+      "max": 0.9589501720472745,
+      "scored": 24,
+      "indeterminate": 0,
+      "errors": 0,
+      "applicable": 24,
+      "scale": "0-1"
+    },
+    "factual_correctness": {
+      "mean": 0.27458333333333335,
+      "min": 0.0,
+      "max": 0.75,
+      "scored": 24,
+      "indeterminate": 0,
+      "errors": 0,
+      "applicable": 24,
+      "scale": "0-1"
+    },
+    "refusal_quality": {
+      "mean": 5.0,
+      "min": 5.0,
+      "max": 5.0,
+      "scored": 6,
+      "indeterminate": 0,
+      "errors": 0,
+      "applicable": 6,
+      "scale": "1-5"
+    }
+  },
+  "cases": [
+    {
+      "id": "leads-last-week",
+      "user_input": "How many leads did we get last week?",
+      "response": "Leads Created: 181. Last week, we generated 181 leads. Focus on converting these leads to maximize revenue impact.",
+      "retrieved_contexts": [
+        "Metric: Leads created (leads_created, count); higher is better for the business.",
+        "Window: 2026-09-14 to 2026-09-20, grain total.",
+        "No breakdown was requested. No comparison window was requested.",
+        "Whole-window total: 181.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (1 rows):\n[\n  {\n    \"leads_created\": \"181\",\n    \"n\": 181\n  }\n]"
+      ],
+      "reference": "Leads created for 2026-09-14 to 2026-09-20 is 181.",
+      "reference_contexts": [
+        "Query Metric: leads_created (count)",
+        "Query Grain: total",
+        "Date Range: 2026-09-14 to 2026-09-20",
+        "Data Table:\n[\n  {\n    \"leads_created\": \"181\",\n    \"n\": 181\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 45795,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.3333333333333333,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.9133041021725793,
+        "factual_correctness": 0.0
+      },
+      "errors": {}
+    },
+    {
+      "id": "conversion-this-month",
+      "user_input": "What is our conversion rate this month?",
+      "response": "Conversion Rate: 40.9%. This month's conversion rate stands at 40.9%, with 252 won out of 616 leads. Given the incomplete nature of the month, continue monitoring to ensure sustained performance.",
+      "retrieved_contexts": [
+        "Metric: Conversion rate (conversion_rate, rate); higher is better for the business.",
+        "Window: 2026-09-01 to 2026-09-24, grain total.",
+        "No breakdown was requested. No comparison window was requested.",
+        "Whole-window total: 40.9%.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (1 rows):\n[\n  {\n    \"conversion_rate\": \"40.9%\",\n    \"n\": 616,\n    \"won\": 252\n  }\n]"
+      ],
+      "reference": "Conversion rate for 2026-09-01 to 2026-09-24 is 40.9%.",
+      "reference_contexts": [
+        "Query Metric: conversion_rate (rate)",
+        "Query Grain: total",
+        "Date Range: 2026-09-01 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"conversion_rate\": \"40.9%\",\n    \"n\": 616,\n    \"won\": 252\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 26133,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.75,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.9589501720472745,
+        "factual_correctness": 0.5
+      },
+      "errors": {}
+    },
+    {
+      "id": "report-last-week",
+      "user_input": "Give me a report for last week.",
+      "response": "181 Leads Created: Conversion Rate Up to 40.9%. Leads created increased to 181, cost per lead decreased to \u20b9364, SLA breach rate dropped to 40.3%, and open leads rose to 78. Notably, the 21-day conversion rate for an earlier window significantly improved to 40.9%. Outcomes are for the period 2026-08-28 to 2026-09-03.",
+      "retrieved_contexts": [
+        "Window: 2026-09-14 to 2026-09-20, against 2026-09-07 to 2026-09-13",
+        "Leads created (leads_created): 181, prior window 169, +7%; higher is better",
+        "Cost per lead (cpl): \u20b9364, prior window \u20b9409, -11%; lower is better",
+        "SLA breach rate (sla_breach_rate): 40.3%, prior window 45.6%, -11%; lower is better",
+        "Open leads (open_pipeline): 78, prior window 70, +11%; higher is better",
+        "21-day conversion rate (conversion_rate_21d): 40.9%, prior window 33.1%, +23%; higher is better",
+        "Customer acquisition cost (cac): \u20b9836, prior window \u20b9843, -1%; lower is better",
+        "Average days to convert (avg_days_to_convert): 9.0 days, prior window 11.9 days, -24%; lower is better"
+      ],
+      "reference": "Leads created for 2026-09-14 to 2026-09-20 is 181.",
+      "reference_contexts": null,
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": false,
+      "intent_reason": "returned an overview where a specific query was asked for",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 31397,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.7142857142857143,
+        "response_groundedness": 0.25,
+        "answer_relevancy": 0.43027928761735934,
+        "factual_correctness": 0.0
+      },
+      "errors": {}
+    },
+    {
+      "id": "conversion-by-channel-this-month",
+      "user_input": "Conversion by channel this month.",
+      "response": "Conversion Rates by Channel. The highest conversion rates came from the Welingak Website and Reference channels, at 100.0% and 90.6% respectively, while Google and Organic Search also performed well. Focus on scaling the high-performing channels like Welingak Website and Reference, while investigating the low conversion rates from Facebook and Other channels.",
+      "retrieved_contexts": [
+        "Metric: Conversion rate (conversion_rate, rate); higher is better for the business.",
+        "Window: 2026-09-01 to 2026-09-24, grain total.",
+        "Split by: lead_source. No comparison window was requested.",
+        "Whole-window total: 40.9%.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (10 rows):\n[\n  {\n    \"lead_source\": \"Welingak Website\",\n    \"conversion_rate\": \"100.0%\",\n    \"n\": 8,\n    \"won\": 8\n  },\n  {\n    \"lead_source\": \"Reference\",\n    \"conversion_rate\": \"90.6%\",\n    \"n\": 32,\n    \"won\": 29\n  },\n  {\n    \"lead_source\": \"Google\",\n    \"conversion_rate\": \"51.7%\",\n    \"n\": 180,\n    \"won\": 93\n  },\n  {\n    \"lead_source\": \"Unknown\",\n    \"conversion_rate\": \"50.0%\",\n    \"n\": 2,\n    \"won\": 1\n  },\n  {\n    \"lead_source\": \"Organic Search\",\n    \"conversion_rate\": \"34.8%\",\n    \"n\": 89,\n    \"won\": 31\n  },\n  {\n    \"lead_source\": \"Direct Traffic\",\n    \"conversion_rate\": \"31.3%\",\n    \"n\": 166,\n    \"won\": 52\n  },\n  {\n    \"lead_source\": \"Olark Chat\",\n    \"conversion_rate\": \"29.8%\",\n    \"n\": 121,\n    \"won\": 36\n  },\n  {\n    \"lead_source\": \"Referral Sites\",\n    \"conversion_rate\": \"18.2%\",\n    \"n\": 11,\n    \"won\": 2\n  },\n  {\n    \"lead_source\": \"Facebook\",\n    \"conversion_rate\": \"0.0%\",\n    \"n\": 5,\n    \"won\": 0\n  },\n  {\n    \"lead_source\": \"Other\",\n    \"conversion_rate\": \"0.0%\",\n    \"n\": 2,\n    \"won\": 0\n  }\n]"
+      ],
+      "reference": "Conversion rate for 2026-09-01 to 2026-09-24 is 40.9%. Welingak Website: 100.0%. Reference: 90.6%. Google: 51.7%. Unknown: 50.0%. Organic Search: 34.8%. Direct Traffic: 31.3%. Olark Chat: 29.8%. Referral Sites: 18.2%. Facebook: 0.0%. Other: 0.0%.",
+      "reference_contexts": [
+        "Query Metric: conversion_rate (rate)",
+        "Query Grain: total",
+        "Date Range: 2026-09-01 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"lead_source\": \"Welingak Website\",\n    \"conversion_rate\": \"100.0%\",\n    \"n\": 8,\n    \"won\": 8\n  },\n  {\n    \"lead_source\": \"Reference\",\n    \"conversion_rate\": \"90.6%\",\n    \"n\": 32,\n    \"won\": 29\n  },\n  {\n    \"lead_source\": \"Google\",\n    \"conversion_rate\": \"51.7%\",\n    \"n\": 180,\n    \"won\": 93\n  },\n  {\n    \"lead_source\": \"Unknown\",\n    \"conversion_rate\": \"50.0%\",\n    \"n\": 2,\n    \"won\": 1\n  },\n  {\n    \"lead_source\": \"Organic Search\",\n    \"conversion_rate\": \"34.8%\",\n    \"n\": 89,\n    \"won\": 31\n  },\n  {\n    \"lead_source\": \"Direct Traffic\",\n    \"conversion_rate\": \"31.3%\",\n    \"n\": 166,\n    \"won\": 52\n  },\n  {\n    \"lead_source\": \"Olark Chat\",\n    \"conversion_rate\": \"29.8%\",\n    \"n\": 121,\n    \"won\": 36\n  },\n  {\n    \"lead_source\": \"Referral Sites\",\n    \"conversion_rate\": \"18.2%\",\n    \"n\": 11,\n    \"won\": 2\n  },\n  {\n    \"lead_source\": \"Facebook\",\n    \"conversion_rate\": \"0.0%\",\n    \"n\": 5,\n    \"won\": 0\n  },\n  {\n    \"lead_source\": \"Other\",\n    \"conversion_rate\": \"0.0%\",\n    \"n\": 2,\n    \"won\": 0\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 30916,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.607132358830117,
+        "factual_correctness": 0.31
+      },
+      "errors": {}
+    },
+    {
+      "id": "conversion-by-channel-vs-last-month",
+      "user_input": "Conversion by channel this month vs last month.",
+      "response": "Conversion Rate by Channel. Google's conversion rate increased significantly from 41.4% to 51.7%, driving overall performance. Focus on leveraging Google's strong performance to further boost conversions.",
+      "retrieved_contexts": [
+        "Metric: Conversion rate (conversion_rate, rate); higher is better for the business.",
+        "Window: 2026-09-01 to 2026-09-24, grain total.",
+        "Split by: lead_source. Comparison window: 2026-08-08 to 2026-08-31.",
+        "Whole-window total: 40.9% (prior window 40.9%).",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (10 rows):\n[\n  {\n    \"lead_source\": \"Welingak Website\",\n    \"conversion_rate\": \"100.0%\",\n    \"n\": 8,\n    \"won\": 8,\n    \"prior\": \"100.0%\",\n    \"ratio\": 1\n  },\n  {\n    \"lead_source\": \"Reference\",\n    \"conversion_rate\": \"90.6%\",\n    \"n\": 32,\n    \"won\": 29,\n    \"prior\": \"94.9%\",\n    \"ratio\": 0.955\n  },\n  {\n    \"lead_source\": \"Google\",\n    \"conversion_rate\": \"51.7%\",\n    \"n\": 180,\n    \"won\": 93,\n    \"prior\": \"41.4%\",\n    \"ratio\": 1.247\n  },\n  {\n    \"lead_source\": \"Unknown\",\n    \"conversion_rate\": \"50.0%\",\n    \"n\": 2,\n    \"won\": 1,\n    \"prior\": \"100.0%\",\n    \"ratio\": 0.5\n  },\n  {\n    \"lead_source\": \"Organic Search\",\n    \"conversion_rate\": \"34.8%\",\n    \"n\": 89,\n    \"won\": 31,\n    \"prior\": \"37.3%\",\n    \"ratio\": 0.933\n  },\n  {\n    \"lead_source\": \"Direct Traffic\",\n    \"conversion_rate\": \"31.3%\",\n    \"n\": 166,\n    \"won\": 52,\n    \"prior\": \"37.7%\",\n    \"ratio\": 0.832\n  },\n  {\n    \"lead_source\": \"Olark Chat\",\n    \"conversion_rate\": \"29.8%\",\n    \"n\": 121,\n    \"won\": 36,\n    \"prior\": \"21.9%\",\n    \"ratio\": 1.36\n  },\n  {\n    \"lead_source\": \"Referral Sites\",\n    \"conversion_rate\": \"18.2%\",\n    \"n\": 11,\n    \"won\": 2,\n    \"prior\": \"40.0%\",\n    \"ratio\": 0.455\n  },\n  {\n    \"lead_source\": \"Facebook\",\n    \"conversion_rate\": \"0.0%\",\n    \"n\": 5,\n    \"won\": 0,\n    \"prior\": \"20.0%\",\n    \"ratio\": 0\n  },\n  {\n    \"lead_source\": \"Other\",\n    \"conversion_rate\": \"0.0%\",\n    \"n\": 2,\n    \"won\": 0,\n    \"prior\": \"100.0%\",\n    \"ratio\": 0\n  }\n]"
+      ],
+      "reference": "Conversion rate for 2026-09-01 to 2026-09-24 is 40.9%. The comparison window is 40.9%. Welingak Website: 100.0%. Reference: 90.6%. Google: 51.7%. Unknown: 50.0%. Organic Search: 34.8%. Direct Traffic: 31.3%. Olark Chat: 29.8%. Referral Sites: 18.2%. Facebook: 0.0%. Other: 0.0%.",
+      "reference_contexts": [
+        "Query Metric: conversion_rate (rate)",
+        "Query Grain: total",
+        "Date Range: 2026-09-01 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"lead_source\": \"Welingak Website\",\n    \"conversion_rate\": \"100.0%\",\n    \"n\": 8,\n    \"won\": 8,\n    \"prior\": \"100.0%\",\n    \"ratio\": 1\n  },\n  {\n    \"lead_source\": \"Reference\",\n    \"conversion_rate\": \"90.6%\",\n    \"n\": 32,\n    \"won\": 29,\n    \"prior\": \"94.9%\",\n    \"ratio\": 0.955\n  },\n  {\n    \"lead_source\": \"Google\",\n    \"conversion_rate\": \"51.7%\",\n    \"n\": 180,\n    \"won\": 93,\n    \"prior\": \"41.4%\",\n    \"ratio\": 1.247\n  },\n  {\n    \"lead_source\": \"Unknown\",\n    \"conversion_rate\": \"50.0%\",\n    \"n\": 2,\n    \"won\": 1,\n    \"prior\": \"100.0%\",\n    \"ratio\": 0.5\n  },\n  {\n    \"lead_source\": \"Organic Search\",\n    \"conversion_rate\": \"34.8%\",\n    \"n\": 89,\n    \"won\": 31,\n    \"prior\": \"37.3%\",\n    \"ratio\": 0.933\n  },\n  {\n    \"lead_source\": \"Direct Traffic\",\n    \"conversion_rate\": \"31.3%\",\n    \"n\": 166,\n    \"won\": 52,\n    \"prior\": \"37.7%\",\n    \"ratio\": 0.832\n  },\n  {\n    \"lead_source\": \"Olark Chat\",\n    \"conversion_rate\": \"29.8%\",\n    \"n\": 121,\n    \"won\": 36,\n    \"prior\": \"21.9%\",\n    \"ratio\": 1.36\n  },\n  {\n    \"lead_source\": \"Referral Sites\",\n    \"conversion_rate\": \"18.2%\",\n    \"n\": 11,\n    \"won\": 2,\n    \"prior\": \"40.0%\",\n    \"ratio\": 0.455\n  },\n  {\n    \"lead_source\": \"Facebook\",\n    \"conversion_rate\": \"0.0%\",\n    \"n\": 5,\n    \"won\": 0,\n    \"prior\": \"20.0%\",\n    \"ratio\": 0\n  },\n  {\n    \"lead_source\": \"Other\",\n    \"conversion_rate\": \"0.0%\",\n    \"n\": 2,\n    \"won\": 0,\n    \"prior\": \"100.0%\",\n    \"ratio\": 0\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 29221,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.3333333333333333,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.5705885375209617,
+        "factual_correctness": 0.0
+      },
+      "errors": {}
+    },
+    {
+      "id": "leads-by-origin-quarter",
+      "user_input": "Break leads down by origin for last quarter.",
+      "response": "Leads created: 2,107 (2026-04-01 to 2026-06-30). Leads created across the window was 2,107. Highest: Landing Page Submission at 1,085.",
+      "retrieved_contexts": [
+        "Metric: Leads created (leads_created, count); higher is better for the business.",
+        "Window: 2026-04-01 to 2026-06-30, grain total.",
+        "Split by: lead_origin. No comparison window was requested.",
+        "Whole-window total: 2,107.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (4 rows):\n[\n  {\n    \"lead_origin\": \"Landing Page Submission\",\n    \"leads_created\": \"1,085\",\n    \"n\": 1085\n  },\n  {\n    \"lead_origin\": \"API\",\n    \"leads_created\": \"867\",\n    \"n\": 867\n  },\n  {\n    \"lead_origin\": \"Lead Add Form\",\n    \"leads_created\": \"146\",\n    \"n\": 146\n  },\n  {\n    \"lead_origin\": \"Lead Import\",\n    \"leads_created\": \"9\",\n    \"n\": 9\n  }\n]"
+      ],
+      "reference": "Leads created for 2026-04-01 to 2026-06-30 is 2,107. Landing Page Submission: 1,085. API: 867. Lead Add Form: 146. Lead Import: 9.",
+      "reference_contexts": [
+        "Query Metric: leads_created (count)",
+        "Query Grain: total",
+        "Date Range: 2026-04-01 to 2026-06-30",
+        "Data Table:\n[\n  {\n    \"lead_origin\": \"Landing Page Submission\",\n    \"leads_created\": \"1,085\",\n    \"n\": 1085\n  },\n  {\n    \"lead_origin\": \"API\",\n    \"leads_created\": \"867\",\n    \"n\": 867\n  },\n  {\n    \"lead_origin\": \"Lead Add Form\",\n    \"leads_created\": \"146\",\n    \"n\": 146\n  },\n  {\n    \"lead_origin\": \"Lead Import\",\n    \"leads_created\": \"9\",\n    \"n\": 9\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": false,
+      "invented_figures": [
+        "2"
+      ],
+      "latency_ms": 29041,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.4920009601697875,
+        "factual_correctness": 0.4
+      },
+      "errors": {}
+    },
+    {
+      "id": "pipeline-by-stage",
+      "user_input": "What does the pipeline look like by stage right now?",
+      "response": "Pipeline by Stage. The pipeline is dominated by Engaged leads (1,967) and Attempting leads (1,584), while stages like Qualified (120) and New (213) have significantly fewer open leads. Disqualified, Lost, Unreachable, and Won stages have no open leads, indicating potential issues in lead progression or recent activity. Focus on nurturing Engaged and Attempting leads to move them through the pipeline.",
+      "retrieved_contexts": [
+        "Metric: Open leads (open_pipeline, count); higher is better for the business.",
+        "Window: 2025-07-24 to 2026-09-24, grain total.",
+        "Split by: stage. No comparison window was requested.",
+        "Whole-window total: 3,884.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (8 rows):\n[\n  {\n    \"stage\": \"Engaged\",\n    \"open_pipeline\": \"1,967\",\n    \"n\": 1967,\n    \"open\": 1967\n  },\n  {\n    \"stage\": \"Attempting\",\n    \"open_pipeline\": \"1,584\",\n    \"n\": 1584,\n    \"open\": 1584\n  },\n  {\n    \"stage\": \"New\",\n    \"open_pipeline\": \"213\",\n    \"n\": 213,\n    \"open\": 213\n  },\n  {\n    \"stage\": \"Qualified\",\n    \"open_pipeline\": \"120\",\n    \"n\": 120,\n    \"open\": 120\n  },\n  {\n    \"stage\": \"Disqualified\",\n    \"open_pipeline\": \"0\",\n    \"n\": 686,\n    \"open\": 0\n  },\n  {\n    \"stage\": \"Lost\",\n    \"open_pipeline\": \"0\",\n    \"n\": 513,\n    \"open\": 0\n  },\n  {\n    \"stage\": \"Unreachable\",\n    \"open_pipeline\": \"0\",\n    \"n\": 595,\n    \"open\": 0\n  },\n  {\n    \"stage\": \"Won\",\n    \"open_pipeline\": \"0\",\n    \"n\": 3561,\n    \"open\": 0\n  }\n]"
+      ],
+      "reference": "Open leads for 2025-07-24 to 2026-09-24 is 3,884. Engaged: 1,967. Attempting: 1,584. New: 213. Qualified: 120. Disqualified: 0. Lost: 0. Unreachable: 0. Won: 0.",
+      "reference_contexts": [
+        "Query Metric: open_pipeline (count)",
+        "Query Grain: total",
+        "Date Range: 2025-07-24 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"stage\": \"Engaged\",\n    \"open_pipeline\": \"1,967\",\n    \"n\": 1967,\n    \"open\": 1967\n  },\n  {\n    \"stage\": \"Attempting\",\n    \"open_pipeline\": \"1,584\",\n    \"n\": 1584,\n    \"open\": 1584\n  },\n  {\n    \"stage\": \"New\",\n    \"open_pipeline\": \"213\",\n    \"n\": 213,\n    \"open\": 213\n  },\n  {\n    \"stage\": \"Qualified\",\n    \"open_pipeline\": \"120\",\n    \"n\": 120,\n    \"open\": 120\n  },\n  {\n    \"stage\": \"Disqualified\",\n    \"open_pipeline\": \"0\",\n    \"n\": 686,\n    \"open\": 0\n  },\n  {\n    \"stage\": \"Lost\",\n    \"open_pipeline\": \"0\",\n    \"n\": 513,\n    \"open\": 0\n  },\n  {\n    \"stage\": \"Unreachable\",\n    \"open_pipeline\": \"0\",\n    \"n\": 595,\n    \"open\": 0\n  },\n  {\n    \"stage\": \"Won\",\n    \"open_pipeline\": \"0\",\n    \"n\": 3561,\n    \"open\": 0\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 33697,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.7272727272727273,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.6463716358699181,
+        "factual_correctness": 0.75
+      },
+      "errors": {}
+    },
+    {
+      "id": "weekly-conversion-trend",
+      "user_input": "Show me the weekly conversion rate trend over the last 90 days.",
+      "response": "Weekly Conversion Rate Trend. The weekly conversion rate peaked at 46.5% on 2026-06-29 and has fluctuated around 41% since, with the most recent week at 43.5%. Focus on maintaining strategies that drove the peak performance to stabilize and improve conversion rates.",
+      "retrieved_contexts": [
+        "Metric: Conversion rate (conversion_rate, rate); higher is better for the business.",
+        "Window: 2026-06-27 to 2026-09-24, grain week.",
+        "No breakdown was requested. No comparison window was requested.",
+        "Whole-window total: 41.0%.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (14 rows):\n[\n  {\n    \"period\": \"2026-06-22\",\n    \"conversion_rate\": \"40.0%\",\n    \"n\": 15,\n    \"won\": 6\n  },\n  {\n    \"period\": \"2026-06-29\",\n    \"conversion_rate\": \"46.5%\",\n    \"n\": 127,\n    \"won\": 59\n  },\n  {\n    \"period\": \"2026-07-06\",\n    \"conversion_rate\": \"36.9%\",\n    \"n\": 160,\n    \"won\": 59\n  },\n  {\n    \"period\": \"2026-07-13\",\n    \"conversion_rate\": \"36.1%\",\n    \"n\": 144,\n    \"won\": 52\n  },\n  {\n    \"period\": \"2026-07-20\",\n    \"conversion_rate\": \"43.4%\",\n    \"n\": 152,\n    \"won\": 66\n  },\n  {\n    \"period\": \"2026-07-27\",\n    \"conversion_rate\": \"41.6%\",\n    \"n\": 178,\n    \"won\": 74\n  },\n  {\n    \"period\": \"2026-08-03\",\n    \"conversion_rate\": \"41.8%\",\n    \"n\": 146,\n    \"won\": 61\n  },\n  {\n    \"period\": \"2026-08-10\",\n    \"conversion_rate\": \"41.5%\",\n    \"n\": 164,\n    \"won\": 68\n  },\n  {\n    \"period\": \"2026-08-17\",\n    \"conversion_rate\": \"40.0%\",\n    \"n\": 165,\n    \"won\": 66\n  },\n  {\n    \"period\": \"2026-08-24\",\n    \"conversion_rate\": \"40.9%\",\n    \"n\": 171,\n    \"won\": 70\n  },\n  {\n    \"period\": \"2026-08-31\",\n    \"conversion_rate\": \"41.5%\",\n    \"n\": 183,\n    \"won\": 76\n  },\n  {\n    \"period\": \"2026-09-07\",\n    \"conversion_rate\": \"39.6%\",\n    \"n\": 169,\n    \"won\": 67\n  },\n  {\n    \"period\": \"2026-09-14\",\n    \"conversion_rate\": \"41.4%\",\n    \"n\": 181,\n    \"won\": 75\n  },\n  {\n    \"period\": \"2026-09-21\",\n    \"conversion_rate\": \"43.5%\",\n    \"n\": 108,\n    \"won\": 47\n  }\n]"
+      ],
+      "reference": "Conversion rate for 2026-06-27 to 2026-09-24 is 41.0%. 2026-06-22: 40.0%. 2026-06-29: 46.5%. 2026-07-06: 36.9%. 2026-07-13: 36.1%. 2026-07-20: 43.4%. 2026-07-27: 41.6%. 2026-08-03: 41.8%. 2026-08-10: 41.5%. 2026-08-17: 40.0%. 2026-08-24: 40.9%. 2026-08-31: 41.5%. 2026-09-07: 39.6%. 2026-09-14: 41.4%. 2026-09-21: 43.5%.",
+      "reference_contexts": [
+        "Query Metric: conversion_rate (rate)",
+        "Query Grain: week",
+        "Date Range: 2026-06-27 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"period\": \"2026-06-22\",\n    \"conversion_rate\": \"40.0%\",\n    \"n\": 15,\n    \"won\": 6\n  },\n  {\n    \"period\": \"2026-06-29\",\n    \"conversion_rate\": \"46.5%\",\n    \"n\": 127,\n    \"won\": 59\n  },\n  {\n    \"period\": \"2026-07-06\",\n    \"conversion_rate\": \"36.9%\",\n    \"n\": 160,\n    \"won\": 59\n  },\n  {\n    \"period\": \"2026-07-13\",\n    \"conversion_rate\": \"36.1%\",\n    \"n\": 144,\n    \"won\": 52\n  },\n  {\n    \"period\": \"2026-07-20\",\n    \"conversion_rate\": \"43.4%\",\n    \"n\": 152,\n    \"won\": 66\n  },\n  {\n    \"period\": \"2026-07-27\",\n    \"conversion_rate\": \"41.6%\",\n    \"n\": 178,\n    \"won\": 74\n  },\n  {\n    \"period\": \"2026-08-03\",\n    \"conversion_rate\": \"41.8%\",\n    \"n\": 146,\n    \"won\": 61\n  },\n  {\n    \"period\": \"2026-08-10\",\n    \"conversion_rate\": \"41.5%\",\n    \"n\": 164,\n    \"won\": 68\n  },\n  {\n    \"period\": \"2026-08-17\",\n    \"conversion_rate\": \"40.0%\",\n    \"n\": 165,\n    \"won\": 66\n  },\n  {\n    \"period\": \"2026-08-24\",\n    \"conversion_rate\": \"40.9%\",\n    \"n\": 171,\n    \"won\": 70\n  },\n  {\n    \"period\": \"2026-08-31\",\n    \"conversion_rate\": \"41.5%\",\n    \"n\": 183,\n    \"won\": 76\n  },\n  {\n    \"period\": \"2026-09-07\",\n    \"conversion_rate\": \"39.6%\",\n    \"n\": 169,\n    \"won\": 67\n  },\n  {\n    \"period\": \"2026-09-14\",\n    \"conversion_rate\": \"41.4%\",\n    \"n\": 181,\n    \"won\": 75\n  },\n  {\n    \"period\": \"2026-09-21\",\n    \"conversion_rate\": \"43.5%\",\n    \"n\": 108,\n    \"won\": 47\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 33351,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.75,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.7245362086089734,
+        "factual_correctness": 0.19
+      },
+      "errors": {}
+    },
+    {
+      "id": "monthly-leads-by-source",
+      "user_input": "Monthly lead volume by source for the last year.",
+      "response": "Monthly Leads by Source. Google and Direct Traffic are the top sources, driving the most leads consistently. Focus on optimizing these channels to maintain lead volume.",
+      "retrieved_contexts": [
+        "Metric: Leads created (leads_created, count); higher is better for the business.",
+        "Window: 2025-09-24 to 2026-09-24, grain month.",
+        "Split by: lead_source. No comparison window was requested.",
+        "Whole-window total: 8,266.",
+        "Caveats to respect: Showing the top 10 by volume; other segments are omitted. Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (127 rows):\n[\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Direct Traffic\",\n    \"leads_created\": \"28\",\n    \"n\": 28\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Facebook\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Google\",\n    \"leads_created\": \"34\",\n    \"n\": 34\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Olark Chat\",\n    \"leads_created\": \"22\",\n    \"n\": 22\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Organic Search\",\n    \"leads_created\": \"11\",\n    \"n\": 11\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Reference\",\n    \"leads_created\": \"5\",\n    \"n\": 5\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Referral Sites\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Welingak Website\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Direct Traffic\",\n    \"leads_created\": \"133\",\n    \"n\": 133\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Facebook\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Google\",\n    \"leads_created\": \"151\",\n    \"n\": 151\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Olark Chat\",\n    \"leads_created\": \"96\",\n    \"n\": 96\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Organic Search\",\n    \"leads_created\": \"61\",\n    \"n\": 61\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Other\",\n    \"leads_created\": \"3\",\n    \"n\": 3\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Reference\",\n    \"leads_created\": \"26\",\n    \"n\": 26\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Referral Sites\",\n    \"leads_created\": \"11\",\n    \"n\": 11\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Unknown\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Welingak Website\",\n    \"leads_created\": \"9\",\n    \"n\": 9\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Direct Traffic\",\n    \"leads_created\": \"168\",\n    \"n\": 168\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Facebook\",\n    \"leads_created\": \"4\",\n    \"n\": 4\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Google\",\n    \"leads_created\": \"186\",\n    \"n\": 186\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Olark Chat\",\n    \"leads_created\": \"122\",\n    \"n\": 122\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Organic Search\",\n    \"leads_created\": \"67\",\n    \"n\": 67\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Other\",\n    \"leads_created\": \"2\",\n    \"n\": 2\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Reference\",\n    \"leads_created\": \"60\",\n    \"n\": 60\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Referral Sites\",\n    \"leads_created\": \"3\",\n    \"n\": 3\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Unknown\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Welingak Website\",\n    \"leads_created\": \"8\",\n    \"n\": 8\n  },\n  {\n    \"period\": \"2025-12-01\",\n    \"lead_source\": \"Direct Traffic\",\n    \"leads_created\": \"228\",\n    \"n\": 228\n  },\n  {\n    \"period\": \"2025-12-01\",\n    \"lead_source\": \"Facebook\",\n    \"leads_created\": \"2\",\n    \"n\": 2\n  },\n  {\n    \"period\": \"2025-12-01\",\n    \"lead_source\": \"Google\",\n    \"leads_created\": \"264\",\n    \"n\": 264\n  },\n  {\n    \"period\": \"2025-12-01\",\n    \"lead_source\": \"Olark Chat\",\n    \"leads_created\": \"144\",\n    \"n\": 144\n  },\n  {\n    \"period\": \"2025-12-01\",\n    \"lead_source\": \"Organic Search\",\n    \"leads_created\": \"95\",\n    \"n\": 95\n  },\n  {\n    \"period\": \"2025-12-01\",\n    \"lead_source\": \"Other\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-12-01\",\n    \"lead_source\": \"Reference\",\n    \"leads_created\": \"57\",\n    \"n\": 57\n  },\n  {\n    \"period\": \"2025-12-01\",\n    \"lead_source\": \"Referral Sites\",\n    \"leads_created\": \"7\",\n    \"n\": 7\n  },\n  {\n    \"period\": \"2025-12-01\",\n    \"lead_source\": \"Unknown\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-12-01\",\n    \"lead_source\": \"Welingak Website\",\n    \"leads_created\": \"11\",\n    \"n\": 11\n  },\n  {\n    \"period\": \"2026-01-01\",\n    \"lead_source\": \"Direct Traffic\",\n    \"leads_created\": \"212\",\n    \"n\": 212\n  },\n  {\n    \"period\": \"2026-01-01\",\n    \"lead_source\": \"Facebook\",\n    \"leads_created\": \"4\",\n    \"n\": 4\n  },\n  {\n    \"period\": \"2026-01-01\",\n    \"lead_source\": \"Google\",\n    \"leads_created\": \"249\",\n    \"n\": 249\n  },\n  {\n    \"period\": \"2026-01-01\",\n    \"lead_source\": \"Olark Chat\",\n    \"leads_created\": \"133\",\n    \"n\": 133\n  },\n  {\n    \"period\": \"2026-01-01\",\n    \"lead_source\": \"Organic Search\",\n    \"leads_created\": \"94\",\n    \"n\": 94\n  },\n  {\n    \"period\": \"2026-01-01\",\n    \"lead_source\": \"Other\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2026-01-01\",\n    \"lead_source\": \"Reference\",\n    \"leads_created\": \"35\",\n    \"n\": 35\n  },\n  {\n    \"period\": \"2026-01-01\",\n    \"lead_source\": \"Referral Sites\",\n    \"leads_created\": \"9\",\n    \"n\": 9\n  },\n  {\n    \"period\": \"2026-01-01\",\n    \"lead_source\": \"Unknown\",\n    \"leads_created\": \"3\",\n    \"n\": 3\n  },\n  {\n    \"period\": \"2026-01-01\",\n    \"lead_source\": \"Welingak Website\",\n    \"leads_created\": \"13\",\n    \"n\": 13\n  },\n  {\n    \"period\": \"2026-02-01\",\n    \"lead_source\": \"Direct Traffic\",\n    \"leads_created\": \"162\",\n    \"n\": 162\n  },\n  {\n    \"period\": \"2026-02-01\",\n    \"lead_source\": \"Facebook\",\n    \"leads_created\": \"8\",\n    \"n\": 8\n  },\n  {\n    \"period\": \"2026-02-01\",\n    \"lead_source\": \"Google\",\n    \"leads_created\": \"201\",\n    \"n\": 201\n  },\n  {\n    \"period\": \"2026-02-01\",\n    \"lead_source\": \"Olark Chat\",\n    \"leads_created\": \"116\",\n    \"n\": 116\n  },\n  {\n    \"period\": \"2026-02-01\",\n    \"lead_source\": \"Organic Search\",\n    \"leads_created\": \"78\",\n    \"n\": 78\n  },\n  {\n    \"period\": \"2026-02-01\",\n    \"lead_source\": \"Other\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2026-02-01\",\n    \"lead_source\": \"Reference\",\n    \"leads_created\": \"33\",\n    \"n\": 33\n  },\n  {\n    \"period\": \"2026-02-01\",\n    \"lead_source\": \"Referral Sites\",\n    \"leads_created\": \"11\",\n    \"n\": 11\n  },\n  {\n    \"period\": \"2026-02-01\",\n    \"lead_source\": \"Unknown\",\n    \"leads_created\": \"3\",\n    \"n\": 3\n  },\n  {\n    \"period\": \"2026-02-01\",\n    \"lead_source\": \"Welingak Website\",\n    \"leads_created\": \"6\",\n    \"n\": 6\n  },\n  {\n    \"period\": \"2026-03-01\",\n    \"lead_source\": \"Direct Traffic\",\n    \"leads_created\": \"209\",\n    \"n\": 209\n  },\n  {\n    \"period\": \"2026-03-01\",\n    \"lead_source\": \"Facebook\",\n    \"leads_created\": \"6\",\n    \"n\": 6\n  }\n]"
+      ],
+      "reference": "Leads created for 2025-09-24 to 2026-09-24 is 8,266. 2025-09-01 / Direct Traffic: 28. 2025-09-01 / Facebook: 1. 2025-09-01 / Google: 34. 2025-09-01 / Olark Chat: 22. 2025-09-01 / Organic Search: 11. 2025-09-01 / Reference: 5. 2025-09-01 / Referral Sites: 1. 2025-09-01 / Welingak Website: 1. 2025-10-01 / Direct Traffic: 133. 2025-10-01 / Facebook: 1. 2025-10-01 / Google: 151. 2025-10-01 / Olark Chat: 96. 2025-10-01 / Organic Search: 61. 2025-10-01 / Other: 3. 2025-10-01 / Reference: 26. 2025-10-01 / Referral Sites: 11. 2025-10-01 / Unknown: 1. 2025-10-01 / Welingak Website: 9. 2025-11-01 / Direct Traffic: 168. 2025-11-01 / Facebook: 4. 2025-11-01 / Google: 186. 2025-11-01 / Olark Chat: 122. 2025-11-01 / Organic Search: 67. 2025-11-01 / Other: 2. 2025-11-01 / Reference: 60.",
+      "reference_contexts": [
+        "Query Metric: leads_created (count)",
+        "Query Grain: month",
+        "Date Range: 2025-09-24 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Direct Traffic\",\n    \"leads_created\": \"28\",\n    \"n\": 28\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Facebook\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Google\",\n    \"leads_created\": \"34\",\n    \"n\": 34\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Olark Chat\",\n    \"leads_created\": \"22\",\n    \"n\": 22\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Organic Search\",\n    \"leads_created\": \"11\",\n    \"n\": 11\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Reference\",\n    \"leads_created\": \"5\",\n    \"n\": 5\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Referral Sites\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-09-01\",\n    \"lead_source\": \"Welingak Website\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Direct Traffic\",\n    \"leads_created\": \"133\",\n    \"n\": 133\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Facebook\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Google\",\n    \"leads_created\": \"151\",\n    \"n\": 151\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Olark Chat\",\n    \"leads_created\": \"96\",\n    \"n\": 96\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Organic Search\",\n    \"leads_created\": \"61\",\n    \"n\": 61\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Other\",\n    \"leads_created\": \"3\",\n    \"n\": 3\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Reference\",\n    \"leads_created\": \"26\",\n    \"n\": 26\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Referral Sites\",\n    \"leads_created\": \"11\",\n    \"n\": 11\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Unknown\",\n    \"leads_created\": \"1\",\n    \"n\": 1\n  },\n  {\n    \"period\": \"2025-10-01\",\n    \"lead_source\": \"Welingak Website\",\n    \"leads_created\": \"9\",\n    \"n\": 9\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Direct Traffic\",\n    \"leads_created\": \"168\",\n    \"n\": 168\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Facebook\",\n    \"leads_created\": \"4\",\n    \"n\": 4\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Google\",\n    \"leads_created\": \"186\",\n    \"n\": 186\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Olark Chat\",\n    \"leads_created\": \"122\",\n    \"n\": 122\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Organic Search\",\n    \"leads_created\": \"67\",\n    \"n\": 67\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Other\",\n    \"leads_created\": \"2\",\n    \"n\": 2\n  },\n  {\n    \"period\": \"2025-11-01\",\n    \"lead_source\": \"Reference\",\n    \"leads_created\": \"60\",\n    \"n\": 60\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 37826,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.6,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.7336520984696348,
+        "factual_correctness": 0.07
+      },
+      "errors": {}
+    },
+    {
+      "id": "olark-weekly-june",
+      "user_input": "Show Olark Chat conversion by week in June 2026.",
+      "response": "Olark Chat Conversion Rates by Week in June 2026. Olark Chat conversion rates were highly volatile in June 2026, with the lowest rate at 4.5% on June 8 and the highest at 37.5% on June 29. Given the small sample sizes, especially in the latest week, focus on improving consistency across all sources to stabilize these rates.",
+      "retrieved_contexts": [
+        "Metric: Conversion rate (conversion_rate, rate); higher is better for the business.",
+        "Window: 2026-06-01 to 2026-06-30, grain week.",
+        "Split by: lead_source. No comparison window was requested.",
+        "Whole-window total: 13.2%.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (5 rows):\n[\n  {\n    \"period\": \"2026-06-01\",\n    \"lead_source\": \"Olark Chat\",\n    \"conversion_rate\": \"22.2%\",\n    \"n\": 45,\n    \"won\": 10\n  },\n  {\n    \"period\": \"2026-06-08\",\n    \"lead_source\": \"Olark Chat\",\n    \"conversion_rate\": \"4.5%\",\n    \"n\": 22,\n    \"won\": 1\n  },\n  {\n    \"period\": \"2026-06-15\",\n    \"lead_source\": \"Olark Chat\",\n    \"conversion_rate\": \"5.3%\",\n    \"n\": 38,\n    \"won\": 2\n  },\n  {\n    \"period\": \"2026-06-22\",\n    \"lead_source\": \"Olark Chat\",\n    \"conversion_rate\": \"9.7%\",\n    \"n\": 31,\n    \"won\": 3\n  },\n  {\n    \"period\": \"2026-06-29\",\n    \"lead_source\": \"Olark Chat\",\n    \"conversion_rate\": \"37.5%\",\n    \"n\": 8,\n    \"won\": 3\n  }\n]"
+      ],
+      "reference": "Conversion rate for 2026-06-01 to 2026-06-30 is 13.2%. 2026-06-01: 22.2%. 2026-06-08: 4.5%. 2026-06-15: 5.3%. 2026-06-22: 9.7%. 2026-06-29: 37.5%.",
+      "reference_contexts": [
+        "Query Metric: conversion_rate (rate)",
+        "Query Grain: week",
+        "Date Range: 2026-06-01 to 2026-06-30",
+        "Data Table:\n[\n  {\n    \"period\": \"2026-06-01\",\n    \"conversion_rate\": \"22.2%\",\n    \"n\": 45,\n    \"won\": 10\n  },\n  {\n    \"period\": \"2026-06-08\",\n    \"conversion_rate\": \"4.5%\",\n    \"n\": 22,\n    \"won\": 1\n  },\n  {\n    \"period\": \"2026-06-15\",\n    \"conversion_rate\": \"5.3%\",\n    \"n\": 38,\n    \"won\": 2\n  },\n  {\n    \"period\": \"2026-06-22\",\n    \"conversion_rate\": \"9.7%\",\n    \"n\": 31,\n    \"won\": 3\n  },\n  {\n    \"period\": \"2026-06-29\",\n    \"conversion_rate\": \"37.5%\",\n    \"n\": 8,\n    \"won\": 3\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": false,
+      "intent_reason": "compiles to a different pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 37864,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.75,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.8228540605779475,
+        "factual_correctness": 0.75
+      },
+      "errors": {}
+    },
+    {
+      "id": "working-professionals-conversion",
+      "user_input": "How well do working professionals convert this year?",
+      "response": "Working Professionals Conversion Rate at 92.4%. The conversion rate for working professionals this year stands at 92.4%, with 440 out of 476 leads won. This high conversion rate suggests the current strategy is effective, so maintaining these efforts is advisable.",
+      "retrieved_contexts": [
+        "Metric: Conversion rate (conversion_rate, rate); higher is better for the business.",
+        "Window: 2026-01-01 to 2026-09-24, grain total.",
+        "No breakdown was requested. No comparison window was requested.",
+        "Whole-window total: 92.4%.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (1 rows):\n[\n  {\n    \"conversion_rate\": \"92.4%\",\n    \"n\": 476,\n    \"won\": 440\n  }\n]"
+      ],
+      "reference": "Conversion rate for 2026-01-01 to 2026-09-24 is 92.4%.",
+      "reference_contexts": [
+        "Query Metric: conversion_rate (rate)",
+        "Query Grain: total",
+        "Date Range: 2026-01-01 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"conversion_rate\": \"92.4%\",\n    \"n\": 476,\n    \"won\": 440\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 32397,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.25,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.928231138830793,
+        "factual_correctness": 0.0
+      },
+      "errors": {}
+    },
+    {
+      "id": "mumbai-vs-rest",
+      "user_input": "Leads from Mumbai last month.",
+      "response": "Leads from Mumbai: 252. Mumbai generated 252 leads last month. Focus on converting these leads to maximize revenue.",
+      "retrieved_contexts": [
+        "Metric: Leads created (leads_created, count); higher is better for the business.",
+        "Window: 2026-08-01 to 2026-08-31, grain total.",
+        "No breakdown was requested. No comparison window was requested.",
+        "Whole-window total: 252.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (1 rows):\n[\n  {\n    \"leads_created\": \"252\",\n    \"n\": 252\n  }\n]"
+      ],
+      "reference": "Leads created for 2026-08-01 to 2026-08-31 is 252.",
+      "reference_contexts": [
+        "Query Metric: leads_created (count)",
+        "Query Grain: total",
+        "Date Range: 2026-08-01 to 2026-08-31",
+        "Data Table:\n[\n  {\n    \"leads_created\": \"252\",\n    \"n\": 252\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 28212,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.0,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.7599709297034015,
+        "factual_correctness": 0.0
+      },
+      "errors": {}
+    },
+    {
+      "id": "unknown-city",
+      "user_input": "How many leads last month have no city recorded?",
+      "response": "Leads Created Without City Recorded. Last month, 260 leads were created without a city recorded, which is concerning for lead quality. Focus on improving data completeness during lead capture.",
+      "retrieved_contexts": [
+        "Metric: Leads created (leads_created, count); higher is better for the business.",
+        "Window: 2026-08-01 to 2026-08-31, grain total.",
+        "No breakdown was requested. No comparison window was requested.",
+        "Whole-window total: 260.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (1 rows):\n[\n  {\n    \"leads_created\": \"260\",\n    \"n\": 260\n  }\n]"
+      ],
+      "reference": "Leads created for 2026-08-01 to 2026-08-31 is 260.",
+      "reference_contexts": [
+        "Query Metric: leads_created (count)",
+        "Query Grain: total",
+        "Date Range: 2026-08-01 to 2026-08-31",
+        "Data Table:\n[\n  {\n    \"leads_created\": \"260\",\n    \"n\": 260\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 29346,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.0,
+        "response_groundedness": 0.5,
+        "answer_relevancy": 0.9058509634663646,
+        "factual_correctness": 0.0
+      },
+      "errors": {}
+    },
+    {
+      "id": "paid-channels-only",
+      "user_input": "Conversion rate for Google and Facebook leads this quarter.",
+      "response": "Google Leads Convert Much Higher Than Facebook. Google leads converted at 44.9%, significantly outperforming Facebook\u2019s 7.1%. Focus on scaling Google leads while investigating the low conversion on Facebook.",
+      "retrieved_contexts": [
+        "Metric: Conversion rate (conversion_rate, rate); higher is better for the business.",
+        "Window: 2026-07-01 to 2026-09-24, grain total.",
+        "Split by: lead_source. No comparison window was requested.",
+        "Whole-window total: 44.1%.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (2 rows):\n[\n  {\n    \"lead_source\": \"Google\",\n    \"conversion_rate\": \"44.9%\",\n    \"n\": 626,\n    \"won\": 281\n  },\n  {\n    \"lead_source\": \"Facebook\",\n    \"conversion_rate\": \"7.1%\",\n    \"n\": 14,\n    \"won\": 1\n  }\n]"
+      ],
+      "reference": "Conversion rate for 2026-07-01 to 2026-09-24 is 44.1%. Google: 44.9%. Facebook: 7.1%.",
+      "reference_contexts": [
+        "Query Metric: conversion_rate (rate)",
+        "Query Grain: total",
+        "Date Range: 2026-07-01 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"lead_source\": \"Google\",\n    \"conversion_rate\": \"44.9%\",\n    \"n\": 626,\n    \"won\": 281\n  },\n  {\n    \"lead_source\": \"Facebook\",\n    \"conversion_rate\": \"7.1%\",\n    \"n\": 14,\n    \"won\": 1\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 30601,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.5,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.7308594106285174,
+        "factual_correctness": 0.75
+      },
+      "errors": {}
+    },
+    {
+      "id": "stale-leads-by-rep",
+      "user_input": "Which rep is sitting on the most stale leads?",
+      "response": "Sneha Iyer Has Most Stale Leads. Sneha Iyer (REP003) has the most stale leads with 429 open leads, which is concerning for the business. Focus should be on improving lead follow-up and reducing the number of open leads.",
+      "retrieved_contexts": [
+        "Metric: Open leads (open_pipeline, count); higher is better for the business.",
+        "Window: 2025-07-24 to 2026-09-24, grain total.",
+        "Split by: owner_id. No comparison window was requested.",
+        "Whole-window total: 3,884.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (12 rows):\n[\n  {\n    \"owner_id\": \"REP003 \u00b7 Sneha Iyer\",\n    \"open_pipeline\": \"429\",\n    \"n\": 910,\n    \"open\": 429\n  },\n  {\n    \"owner_id\": \"REP012 \u00b7 Sahil Chopra\",\n    \"open_pipeline\": \"394\",\n    \"n\": 824,\n    \"open\": 394\n  },\n  {\n    \"owner_id\": \"REP006 \u00b7 Karan Shah\",\n    \"open_pipeline\": \"376\",\n    \"n\": 963,\n    \"open\": 376\n  },\n  {\n    \"owner_id\": \"REP009 \u00b7 Neha Kulkarni\",\n    \"open_pipeline\": \"372\",\n    \"n\": 799,\n    \"open\": 372\n  },\n  {\n    \"owner_id\": \"REP008 \u00b7 Imran Qureshi\",\n    \"open_pipeline\": \"359\",\n    \"n\": 763,\n    \"open\": 359\n  },\n  {\n    \"owner_id\": \"REP007 \u00b7 Divya Raghavan\",\n    \"open_pipeline\": \"356\",\n    \"n\": 944,\n    \"open\": 356\n  },\n  {\n    \"owner_id\": \"REP005 \u00b7 Priya Menon\",\n    \"open_pipeline\": \"335\",\n    \"n\": 708,\n    \"open\": 335\n  },\n  {\n    \"owner_id\": \"REP001 \u00b7 Aarti Deshpande\",\n    \"open_pipeline\": \"320\",\n    \"n\": 904,\n    \"open\": 320\n  },\n  {\n    \"owner_id\": \"REP002 \u00b7 Rohit Malhotra\",\n    \"open_pipeline\": \"251\",\n    \"n\": 564,\n    \"open\": 251\n  },\n  {\n    \"owner_id\": \"REP004 \u00b7 Vikram Nair\",\n    \"open_pipeline\": \"251\",\n    \"n\": 586,\n    \"open\": 251\n  },\n  {\n    \"owner_id\": \"REP010 \u00b7 Arjun Bose\",\n    \"open_pipeline\": \"240\",\n    \"n\": 731,\n    \"open\": 240\n  },\n  {\n    \"owner_id\": \"REP011 \u00b7 Meera Pillai\",\n    \"open_pipeline\": \"201\",\n    \"n\": 543,\n    \"open\": 201\n  }\n]"
+      ],
+      "reference": "Open leads for 2025-07-24 to 2026-09-24 is 3,884. REP003 \u00b7 Sneha Iyer: 429. REP012 \u00b7 Sahil Chopra: 394. REP006 \u00b7 Karan Shah: 376. REP009 \u00b7 Neha Kulkarni: 372. REP008 \u00b7 Imran Qureshi: 359. REP007 \u00b7 Divya Raghavan: 356. REP005 \u00b7 Priya Menon: 335. REP001 \u00b7 Aarti Deshpande: 320. REP002 \u00b7 Rohit Malhotra: 251. REP004 \u00b7 Vikram Nair: 251. REP010 \u00b7 Arjun Bose: 240. REP011 \u00b7 Meera Pillai: 201.",
+      "reference_contexts": [
+        "Query Metric: open_pipeline (count)",
+        "Query Grain: total",
+        "Date Range: 2025-07-24 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"owner_id\": \"REP003 \u00b7 Sneha Iyer\",\n    \"open_pipeline\": \"429\",\n    \"n\": 910,\n    \"open\": 429\n  },\n  {\n    \"owner_id\": \"REP012 \u00b7 Sahil Chopra\",\n    \"open_pipeline\": \"394\",\n    \"n\": 824,\n    \"open\": 394\n  },\n  {\n    \"owner_id\": \"REP006 \u00b7 Karan Shah\",\n    \"open_pipeline\": \"376\",\n    \"n\": 963,\n    \"open\": 376\n  },\n  {\n    \"owner_id\": \"REP009 \u00b7 Neha Kulkarni\",\n    \"open_pipeline\": \"372\",\n    \"n\": 799,\n    \"open\": 372\n  },\n  {\n    \"owner_id\": \"REP008 \u00b7 Imran Qureshi\",\n    \"open_pipeline\": \"359\",\n    \"n\": 763,\n    \"open\": 359\n  },\n  {\n    \"owner_id\": \"REP007 \u00b7 Divya Raghavan\",\n    \"open_pipeline\": \"356\",\n    \"n\": 944,\n    \"open\": 356\n  },\n  {\n    \"owner_id\": \"REP005 \u00b7 Priya Menon\",\n    \"open_pipeline\": \"335\",\n    \"n\": 708,\n    \"open\": 335\n  },\n  {\n    \"owner_id\": \"REP001 \u00b7 Aarti Deshpande\",\n    \"open_pipeline\": \"320\",\n    \"n\": 904,\n    \"open\": 320\n  },\n  {\n    \"owner_id\": \"REP002 \u00b7 Rohit Malhotra\",\n    \"open_pipeline\": \"251\",\n    \"n\": 564,\n    \"open\": 251\n  },\n  {\n    \"owner_id\": \"REP004 \u00b7 Vikram Nair\",\n    \"open_pipeline\": \"251\",\n    \"n\": 586,\n    \"open\": 251\n  },\n  {\n    \"owner_id\": \"REP010 \u00b7 Arjun Bose\",\n    \"open_pipeline\": \"240\",\n    \"n\": 731,\n    \"open\": 240\n  },\n  {\n    \"owner_id\": \"REP011 \u00b7 Meera Pillai\",\n    \"open_pipeline\": \"201\",\n    \"n\": 543,\n    \"open\": 201\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 30886,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.2,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.7787198067022794,
+        "factual_correctness": 0.08
+      },
+      "errors": {}
+    },
+    {
+      "id": "sla-by-rep",
+      "user_input": "Who is breaching SLA the most this quarter?",
+      "response": "Sneha Iyer Leads in SLA Breaches. Sneha Iyer (REP003) has the highest SLA breach rate at 62.7%, significantly above the overall rate of 43.4%. Focus on improving processes and support for Sneha to reduce breaches.",
+      "retrieved_contexts": [
+        "Metric: SLA breach rate (sla_breach_rate, rate); lower is better for the business.",
+        "Window: 2026-07-01 to 2026-09-24, grain total.",
+        "Split by: owner_id. No comparison window was requested.",
+        "Whole-window total: 43.4%.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (12 rows):\n[\n  {\n    \"owner_id\": \"REP003 \u00b7 Sneha Iyer\",\n    \"sla_breach_rate\": \"62.7%\",\n    \"n\": 204,\n    \"breached\": 128,\n    \"measured\": 204\n  },\n  {\n    \"owner_id\": \"REP001 \u00b7 Aarti Deshpande\",\n    \"sla_breach_rate\": \"57.8%\",\n    \"n\": 199,\n    \"breached\": 115,\n    \"measured\": 199\n  },\n  {\n    \"owner_id\": \"REP006 \u00b7 Karan Shah\",\n    \"sla_breach_rate\": \"56.2%\",\n    \"n\": 203,\n    \"breached\": 114,\n    \"measured\": 203\n  },\n  {\n    \"owner_id\": \"REP005 \u00b7 Priya Menon\",\n    \"sla_breach_rate\": \"48.9%\",\n    \"n\": 174,\n    \"breached\": 85,\n    \"measured\": 174\n  },\n  {\n    \"owner_id\": \"REP002 \u00b7 Rohit Malhotra\",\n    \"sla_breach_rate\": \"48.3%\",\n    \"n\": 118,\n    \"breached\": 57,\n    \"measured\": 118\n  },\n  {\n    \"owner_id\": \"REP009 \u00b7 Neha Kulkarni\",\n    \"sla_breach_rate\": \"45.1%\",\n    \"n\": 195,\n    \"breached\": 88,\n    \"measured\": 195\n  },\n  {\n    \"owner_id\": \"REP010 \u00b7 Arjun Bose\",\n    \"sla_breach_rate\": \"42.8%\",\n    \"n\": 152,\n    \"breached\": 65,\n    \"measured\": 152\n  },\n  {\n    \"owner_id\": \"REP007 \u00b7 Divya Raghavan\",\n    \"sla_breach_rate\": \"32.0%\",\n    \"n\": 194,\n    \"breached\": 62,\n    \"measured\": 194\n  },\n  {\n    \"owner_id\": \"REP004 \u00b7 Vikram Nair\",\n    \"sla_breach_rate\": \"30.6%\",\n    \"n\": 124,\n    \"breached\": 38,\n    \"measured\": 124\n  },\n  {\n    \"owner_id\": \"REP012 \u00b7 Sahil Chopra\",\n    \"sla_breach_rate\": \"29.2%\",\n    \"n\": 178,\n    \"breached\": 52,\n    \"measured\": 178\n  },\n  {\n    \"owner_id\": \"REP011 \u00b7 Meera Pillai\",\n    \"sla_breach_rate\": \"26.0%\",\n    \"n\": 123,\n    \"breached\": 32,\n    \"measured\": 123\n  },\n  {\n    \"owner_id\": \"REP008 \u00b7 Imran Qureshi\",\n    \"sla_breach_rate\": \"24.8%\",\n    \"n\": 141,\n    \"breached\": 35,\n    \"measured\": 141\n  }\n]"
+      ],
+      "reference": "SLA breach rate for 2026-07-01 to 2026-09-24 is 43.4%. REP003 \u00b7 Sneha Iyer: 62.7%. REP001 \u00b7 Aarti Deshpande: 57.8%. REP006 \u00b7 Karan Shah: 56.2%. REP005 \u00b7 Priya Menon: 48.9%. REP002 \u00b7 Rohit Malhotra: 48.3%. REP009 \u00b7 Neha Kulkarni: 45.1%. REP010 \u00b7 Arjun Bose: 42.8%. REP007 \u00b7 Divya Raghavan: 32.0%. REP004 \u00b7 Vikram Nair: 30.6%. REP012 \u00b7 Sahil Chopra: 29.2%. REP011 \u00b7 Meera Pillai: 26.0%. REP008 \u00b7 Imran Qureshi: 24.8%.",
+      "reference_contexts": [
+        "Query Metric: sla_breach_rate (rate)",
+        "Query Grain: total",
+        "Date Range: 2026-07-01 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"owner_id\": \"REP003 \u00b7 Sneha Iyer\",\n    \"sla_breach_rate\": \"62.7%\",\n    \"n\": 204,\n    \"breached\": 128,\n    \"measured\": 204\n  },\n  {\n    \"owner_id\": \"REP001 \u00b7 Aarti Deshpande\",\n    \"sla_breach_rate\": \"57.8%\",\n    \"n\": 199,\n    \"breached\": 115,\n    \"measured\": 199\n  },\n  {\n    \"owner_id\": \"REP006 \u00b7 Karan Shah\",\n    \"sla_breach_rate\": \"56.2%\",\n    \"n\": 203,\n    \"breached\": 114,\n    \"measured\": 203\n  },\n  {\n    \"owner_id\": \"REP005 \u00b7 Priya Menon\",\n    \"sla_breach_rate\": \"48.9%\",\n    \"n\": 174,\n    \"breached\": 85,\n    \"measured\": 174\n  },\n  {\n    \"owner_id\": \"REP002 \u00b7 Rohit Malhotra\",\n    \"sla_breach_rate\": \"48.3%\",\n    \"n\": 118,\n    \"breached\": 57,\n    \"measured\": 118\n  },\n  {\n    \"owner_id\": \"REP009 \u00b7 Neha Kulkarni\",\n    \"sla_breach_rate\": \"45.1%\",\n    \"n\": 195,\n    \"breached\": 88,\n    \"measured\": 195\n  },\n  {\n    \"owner_id\": \"REP010 \u00b7 Arjun Bose\",\n    \"sla_breach_rate\": \"42.8%\",\n    \"n\": 152,\n    \"breached\": 65,\n    \"measured\": 152\n  },\n  {\n    \"owner_id\": \"REP007 \u00b7 Divya Raghavan\",\n    \"sla_breach_rate\": \"32.0%\",\n    \"n\": 194,\n    \"breached\": 62,\n    \"measured\": 194\n  },\n  {\n    \"owner_id\": \"REP004 \u00b7 Vikram Nair\",\n    \"sla_breach_rate\": \"30.6%\",\n    \"n\": 124,\n    \"breached\": 38,\n    \"measured\": 124\n  },\n  {\n    \"owner_id\": \"REP012 \u00b7 Sahil Chopra\",\n    \"sla_breach_rate\": \"29.2%\",\n    \"n\": 178,\n    \"breached\": 52,\n    \"measured\": 178\n  },\n  {\n    \"owner_id\": \"REP011 \u00b7 Meera Pillai\",\n    \"sla_breach_rate\": \"26.0%\",\n    \"n\": 123,\n    \"breached\": 32,\n    \"measured\": 123\n  },\n  {\n    \"owner_id\": \"REP008 \u00b7 Imran Qureshi\",\n    \"sla_breach_rate\": \"24.8%\",\n    \"n\": 141,\n    \"breached\": 35,\n    \"measured\": 141\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 32396,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.5,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.8273996328953385,
+        "factual_correctness": 0.14
+      },
+      "errors": {}
+    },
+    {
+      "id": "speed-to-convert-by-source",
+      "user_input": "Which channel converts fastest?",
+      "response": "Welingak Website Leads in Conversion. The Welingak Website has the highest 21-day conversion rate at 96.5%, significantly outperforming other channels. Focus on understanding and replicating the factors contributing to its success.",
+      "retrieved_contexts": [
+        "Metric: 21-day conversion rate (conversion_rate_21d, rate); higher is better for the business.",
+        "Window: 2025-07-24 to 2026-09-24, grain total.",
+        "Split by: lead_source. No comparison window was requested.",
+        "Whole-window total: 29.2%.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (10 rows):\n[\n  {\n    \"lead_source\": \"Welingak Website\",\n    \"conversion_rate_21d\": \"96.5%\",\n    \"n\": 142,\n    \"won\": 137\n  },\n  {\n    \"lead_source\": \"Reference\",\n    \"conversion_rate_21d\": \"90.8%\",\n    \"n\": 534,\n    \"won\": 485\n  },\n  {\n    \"lead_source\": \"Unknown\",\n    \"conversion_rate_21d\": \"55.6%\",\n    \"n\": 36,\n    \"won\": 20\n  },\n  {\n    \"lead_source\": \"Other\",\n    \"conversion_rate_21d\": \"31.8%\",\n    \"n\": 22,\n    \"won\": 7\n  },\n  {\n    \"lead_source\": \"Google\",\n    \"conversion_rate_21d\": \"28.9%\",\n    \"n\": 2873,\n    \"won\": 830\n  },\n  {\n    \"lead_source\": \"Direct Traffic\",\n    \"conversion_rate_21d\": \"22.2%\",\n    \"n\": 2543,\n    \"won\": 565\n  },\n  {\n    \"lead_source\": \"Olark Chat\",\n    \"conversion_rate_21d\": \"21.9%\",\n    \"n\": 1755,\n    \"won\": 385\n  },\n  {\n    \"lead_source\": \"Organic Search\",\n    \"conversion_rate_21d\": \"20.2%\",\n    \"n\": 1154,\n    \"won\": 233\n  },\n  {\n    \"lead_source\": \"Referral Sites\",\n    \"conversion_rate_21d\": \"18.4%\",\n    \"n\": 125,\n    \"won\": 23\n  },\n  {\n    \"lead_source\": \"Facebook\",\n    \"conversion_rate_21d\": \"18.2%\",\n    \"n\": 55,\n    \"won\": 10\n  }\n]"
+      ],
+      "reference": "Average days to convert for 2025-07-24 to 2026-09-24 is 16.3 days. Organic Search: 27.0 days. Direct Traffic: 20.0 days. Unknown: 19.5 days. Google: 17.9 days. Facebook: 15.7 days. Referral Sites: 15.5 days. Other: 13.4 days. Olark Chat: 11.5 days. Welingak Website: 5.5 days. Reference: 4.5 days.",
+      "reference_contexts": [
+        "Query Metric: avg_days_to_convert (days)",
+        "Query Grain: total",
+        "Date Range: 2025-07-24 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"lead_source\": \"Organic Search\",\n    \"avg_days_to_convert\": \"27.0 days\",\n    \"won\": 436\n  },\n  {\n    \"lead_source\": \"Direct Traffic\",\n    \"avg_days_to_convert\": \"20.0 days\",\n    \"won\": 818\n  },\n  {\n    \"lead_source\": \"Unknown\",\n    \"avg_days_to_convert\": \"19.5 days\",\n    \"won\": 29\n  },\n  {\n    \"lead_source\": \"Google\",\n    \"avg_days_to_convert\": \"17.9 days\",\n    \"won\": 1147\n  },\n  {\n    \"lead_source\": \"Facebook\",\n    \"avg_days_to_convert\": \"15.7 days\",\n    \"won\": 13\n  },\n  {\n    \"lead_source\": \"Referral Sites\",\n    \"avg_days_to_convert\": \"15.5 days\",\n    \"won\": 31\n  },\n  {\n    \"lead_source\": \"Other\",\n    \"avg_days_to_convert\": \"13.4 days\",\n    \"won\": 9\n  },\n  {\n    \"lead_source\": \"Olark Chat\",\n    \"avg_days_to_convert\": \"11.5 days\",\n    \"won\": 448\n  },\n  {\n    \"lead_source\": \"Welingak Website\",\n    \"avg_days_to_convert\": \"5.5 days\",\n    \"won\": 140\n  },\n  {\n    \"lead_source\": \"Reference\",\n    \"avg_days_to_convert\": \"4.5 days\",\n    \"won\": 490\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": false,
+      "intent_reason": "compiles to a different pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 29729,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.6666666666666666,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.48379215754933225,
+        "factual_correctness": 0.08
+      },
+      "errors": {}
+    },
+    {
+      "id": "touches-by-source",
+      "user_input": "How many touches does a win take, by channel?",
+      "response": "Touches to Convert by Channel. Facebook and Welingak Website have the lowest touches to convert at 5.0 and 5.5 respectively, indicating efficient conversion. Focus on scaling tactics similar to Facebook and Welingak Website to reduce overall touches needed for conversion.",
+      "retrieved_contexts": [
+        "Metric: Touches to convert (touches_to_convert, touches); lower is better for the business.",
+        "Window: 2025-07-24 to 2026-09-24, grain total.",
+        "Split by: lead_source. No comparison window was requested.",
+        "Whole-window total: 8.7.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (10 rows):\n[\n  {\n    \"lead_source\": \"Referral Sites\",\n    \"touches_to_convert\": \"11.5\",\n    \"won\": 31\n  },\n  {\n    \"lead_source\": \"Organic Search\",\n    \"touches_to_convert\": \"11.5\",\n    \"won\": 436\n  },\n  {\n    \"lead_source\": \"Google\",\n    \"touches_to_convert\": \"9.8\",\n    \"won\": 1147\n  },\n  {\n    \"lead_source\": \"Direct Traffic\",\n    \"touches_to_convert\": \"9.6\",\n    \"won\": 818\n  },\n  {\n    \"lead_source\": \"Other\",\n    \"touches_to_convert\": \"7.8\",\n    \"won\": 9\n  },\n  {\n    \"lead_source\": \"Olark Chat\",\n    \"touches_to_convert\": \"6.1\",\n    \"won\": 448\n  },\n  {\n    \"lead_source\": \"Unknown\",\n    \"touches_to_convert\": \"5.9\",\n    \"won\": 29\n  },\n  {\n    \"lead_source\": \"Reference\",\n    \"touches_to_convert\": \"5.6\",\n    \"won\": 490\n  },\n  {\n    \"lead_source\": \"Welingak Website\",\n    \"touches_to_convert\": \"5.5\",\n    \"won\": 140\n  },\n  {\n    \"lead_source\": \"Facebook\",\n    \"touches_to_convert\": \"5.0\",\n    \"won\": 13\n  }\n]"
+      ],
+      "reference": "Touches to convert for 2025-07-24 to 2026-09-24 is 8.7. Referral Sites: 11.5. Organic Search: 11.5. Google: 9.8. Direct Traffic: 9.6. Other: 7.8. Olark Chat: 6.1. Unknown: 5.9. Reference: 5.6. Welingak Website: 5.5. Facebook: 5.0.",
+      "reference_contexts": [
+        "Query Metric: touches_to_convert (touches)",
+        "Query Grain: total",
+        "Date Range: 2025-07-24 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"lead_source\": \"Referral Sites\",\n    \"touches_to_convert\": \"11.5\",\n    \"won\": 31\n  },\n  {\n    \"lead_source\": \"Organic Search\",\n    \"touches_to_convert\": \"11.5\",\n    \"won\": 436\n  },\n  {\n    \"lead_source\": \"Google\",\n    \"touches_to_convert\": \"9.8\",\n    \"won\": 1147\n  },\n  {\n    \"lead_source\": \"Direct Traffic\",\n    \"touches_to_convert\": \"9.6\",\n    \"won\": 818\n  },\n  {\n    \"lead_source\": \"Other\",\n    \"touches_to_convert\": \"7.8\",\n    \"won\": 9\n  },\n  {\n    \"lead_source\": \"Olark Chat\",\n    \"touches_to_convert\": \"6.1\",\n    \"won\": 448\n  },\n  {\n    \"lead_source\": \"Unknown\",\n    \"touches_to_convert\": \"5.9\",\n    \"won\": 29\n  },\n  {\n    \"lead_source\": \"Reference\",\n    \"touches_to_convert\": \"5.6\",\n    \"won\": 490\n  },\n  {\n    \"lead_source\": \"Welingak Website\",\n    \"touches_to_convert\": \"5.5\",\n    \"won\": 140\n  },\n  {\n    \"lead_source\": \"Facebook\",\n    \"touches_to_convert\": \"5.0\",\n    \"won\": 13\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 32282,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.8,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.6702888867961277,
+        "factual_correctness": 0.18
+      },
+      "errors": {}
+    },
+    {
+      "id": "cac-by-channel-april",
+      "user_input": "What was our CAC by channel in April 2026?",
+      "response": "CAC by Channel in April 2026. Google had the lowest CAC at \u20b91,346, while Other channels had the highest at \u20b911,730. Focus on optimizing spend in the Other channels to reduce CAC.",
+      "retrieved_contexts": [
+        "Metric: Customer acquisition cost (cac, currency_inr); lower is better for the business.",
+        "Window: 2026-04-01 to 2026-04-30, grain total.",
+        "Split by: channel. No comparison window was requested.",
+        "Whole-window total: \u20b91,659.",
+        "Caveats to respect: Bucketed by spend date; paid channels only.",
+        "Data table (4 rows):\n[\n  {\n    \"channel\": \"Other\",\n    \"cac\": \"\u20b911,730\",\n    \"spend\": 11729.75,\n    \"spend_leads\": 1,\n    \"n\": 1,\n    \"won\": 1\n  },\n  {\n    \"channel\": \"Facebook\",\n    \"cac\": \"\u20b94,423\",\n    \"spend\": 8845.72,\n    \"spend_leads\": 4,\n    \"n\": 4,\n    \"won\": 2\n  },\n  {\n    \"channel\": \"Google\",\n    \"cac\": \"\u20b91,346\",\n    \"spend\": 109064.92,\n    \"spend_leads\": 230,\n    \"n\": 230,\n    \"won\": 81\n  },\n  {\n    \"channel\": \"Bing\",\n    \"cac\": \"n/a\",\n    \"spend\": 9694.99,\n    \"spend_leads\": 0\n  }\n]"
+      ],
+      "reference": "Customer acquisition cost for 2026-04-01 to 2026-04-30 is \u20b91,659. Other: \u20b911,730. Facebook: \u20b94,423. Google: \u20b91,346. Bing: n/a.",
+      "reference_contexts": [
+        "Query Metric: cac (currency_inr)",
+        "Query Grain: total",
+        "Date Range: 2026-04-01 to 2026-04-30",
+        "Data Table:\n[\n  {\n    \"channel\": \"Other\",\n    \"cac\": \"\u20b911,730\",\n    \"spend\": 11729.75,\n    \"spend_leads\": 1,\n    \"n\": 1,\n    \"won\": 1\n  },\n  {\n    \"channel\": \"Facebook\",\n    \"cac\": \"\u20b94,423\",\n    \"spend\": 8845.72,\n    \"spend_leads\": 4,\n    \"n\": 4,\n    \"won\": 2\n  },\n  {\n    \"channel\": \"Google\",\n    \"cac\": \"\u20b91,346\",\n    \"spend\": 109064.92,\n    \"spend_leads\": 230,\n    \"n\": 230,\n    \"won\": 81\n  },\n  {\n    \"channel\": \"Bing\",\n    \"cac\": \"n/a\",\n    \"spend\": 9694.99,\n    \"spend_leads\": 0\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 31342,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.6666666666666666,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.7891086611408024,
+        "factual_correctness": 0.5
+      },
+      "errors": {}
+    },
+    {
+      "id": "cpl-trend",
+      "user_input": "Monthly cost per lead this year.",
+      "response": "Monthly Cost Per Lead 2026. The cost per lead peaked at \u20b9593 in April, which is concerning, but it has since decreased to \u20b9372 in September. Focus on maintaining current strategies to keep the cost per lead low.",
+      "retrieved_contexts": [
+        "Metric: Cost per lead (cpl, currency_inr); lower is better for the business.",
+        "Window: 2026-01-01 to 2026-09-24, grain month.",
+        "No breakdown was requested. No comparison window was requested.",
+        "Whole-window total: \u20b9410.",
+        "Caveats to respect: Bucketed by spend date; paid channels only.",
+        "Data table (9 rows):\n[\n  {\n    \"period\": \"2026-01-01\",\n    \"cpl\": \"\u20b9365\",\n    \"spend\": 92739.45,\n    \"leads\": 254\n  },\n  {\n    \"period\": \"2026-02-01\",\n    \"cpl\": \"\u20b9386\",\n    \"spend\": 80996.96,\n    \"leads\": 210\n  },\n  {\n    \"period\": \"2026-03-01\",\n    \"cpl\": \"\u20b9392\",\n    \"spend\": 87704.06999999999,\n    \"leads\": 224\n  },\n  {\n    \"period\": \"2026-04-01\",\n    \"cpl\": \"\u20b9593\",\n    \"spend\": 139335.38,\n    \"leads\": 235\n  },\n  {\n    \"period\": \"2026-05-01\",\n    \"cpl\": \"\u20b9385\",\n    \"spend\": 88894.8,\n    \"leads\": 231\n  },\n  {\n    \"period\": \"2026-06-01\",\n    \"cpl\": \"\u20b9436\",\n    \"spend\": 73305.31,\n    \"leads\": 168\n  },\n  {\n    \"period\": \"2026-07-01\",\n    \"cpl\": \"\u20b9389\",\n    \"spend\": 89380.12,\n    \"leads\": 230\n  },\n  {\n    \"period\": \"2026-08-01\",\n    \"cpl\": \"\u20b9375\",\n    \"spend\": 85856.64,\n    \"leads\": 229\n  },\n  {\n    \"period\": \"2026-09-01\",\n    \"cpl\": \"\u20b9372\",\n    \"spend\": 69630.91,\n    \"leads\": 187\n  }\n]"
+      ],
+      "reference": "Cost per lead for 2026-01-01 to 2026-09-24 is \u20b9410. 2026-01-01: \u20b9365. 2026-02-01: \u20b9386. 2026-03-01: \u20b9392. 2026-04-01: \u20b9593. 2026-05-01: \u20b9385. 2026-06-01: \u20b9436. 2026-07-01: \u20b9389. 2026-08-01: \u20b9375. 2026-09-01: \u20b9372.",
+      "reference_contexts": [
+        "Query Metric: cpl (currency_inr)",
+        "Query Grain: month",
+        "Date Range: 2026-01-01 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"period\": \"2026-01-01\",\n    \"cpl\": \"\u20b9365\",\n    \"spend\": 92739.45,\n    \"leads\": 254\n  },\n  {\n    \"period\": \"2026-02-01\",\n    \"cpl\": \"\u20b9386\",\n    \"spend\": 80996.96,\n    \"leads\": 210\n  },\n  {\n    \"period\": \"2026-03-01\",\n    \"cpl\": \"\u20b9392\",\n    \"spend\": 87704.06999999999,\n    \"leads\": 224\n  },\n  {\n    \"period\": \"2026-04-01\",\n    \"cpl\": \"\u20b9593\",\n    \"spend\": 139335.38,\n    \"leads\": 235\n  },\n  {\n    \"period\": \"2026-05-01\",\n    \"cpl\": \"\u20b9385\",\n    \"spend\": 88894.8,\n    \"leads\": 231\n  },\n  {\n    \"period\": \"2026-06-01\",\n    \"cpl\": \"\u20b9436\",\n    \"spend\": 73305.31,\n    \"leads\": 168\n  },\n  {\n    \"period\": \"2026-07-01\",\n    \"cpl\": \"\u20b9389\",\n    \"spend\": 89380.12,\n    \"leads\": 230\n  },\n  {\n    \"period\": \"2026-08-01\",\n    \"cpl\": \"\u20b9375\",\n    \"spend\": 85856.64,\n    \"leads\": 229\n  },\n  {\n    \"period\": \"2026-09-01\",\n    \"cpl\": \"\u20b9372\",\n    \"spend\": 69630.91,\n    \"leads\": 187\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 29582,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.75,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.6910998676064319,
+        "factual_correctness": 0.2
+      },
+      "errors": {}
+    },
+    {
+      "id": "google-cac-vs-previous",
+      "user_input": "Is Google CAC worse than it was?",
+      "response": "Customer acquisition cost: \u20b9503 (2026-08-26 to 2026-09-24). Customer acquisition cost across the window was \u20b9503. That is down 13% on the comparison window. Highest: Google at \u20b9503.",
+      "retrieved_contexts": [
+        "Metric: Customer acquisition cost (cac, currency_inr); lower is better for the business.",
+        "Window: 2026-08-26 to 2026-09-24, grain total.",
+        "Split by: channel. Comparison window: 2026-07-27 to 2026-08-25.",
+        "Whole-window total: \u20b9503 (prior window \u20b9580).",
+        "Caveats to respect: Bucketed by spend date; paid channels only.",
+        "Data table (3 rows):\n[\n  {\n    \"channel\": \"Google\",\n    \"cac\": \"\u20b9503\",\n    \"spend\": 55376.17,\n    \"spend_leads\": 217,\n    \"n\": 217,\n    \"won\": 110,\n    \"prior\": \"\u20b9592\",\n    \"ratio\": 0.85\n  },\n  {\n    \"channel\": \"Facebook\",\n    \"cac\": \"n/a\",\n    \"n\": 6,\n    \"won\": 0,\n    \"prior\": \"n/a\"\n  },\n  {\n    \"channel\": \"Other\",\n    \"cac\": \"n/a\",\n    \"n\": 2,\n    \"won\": 0,\n    \"prior\": \"n/a\"\n  }\n]"
+      ],
+      "reference": "Customer acquisition cost for 2026-08-26 to 2026-09-24 is \u20b9503. The comparison window is \u20b9580. Google: \u20b9503. Facebook: n/a. Other: n/a.",
+      "reference_contexts": [
+        "Query Metric: cac (currency_inr)",
+        "Query Grain: total",
+        "Date Range: 2026-08-26 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"channel\": \"Google\",\n    \"cac\": \"\u20b9503\",\n    \"spend\": 55376.17,\n    \"spend_leads\": 217,\n    \"n\": 217,\n    \"won\": 110,\n    \"prior\": \"\u20b9592\",\n    \"ratio\": 0.85\n  },\n  {\n    \"channel\": \"Facebook\",\n    \"cac\": \"n/a\",\n    \"n\": 6,\n    \"won\": 0,\n    \"prior\": \"n/a\"\n  },\n  {\n    \"channel\": \"Other\",\n    \"cac\": \"n/a\",\n    \"n\": 2,\n    \"won\": 0,\n    \"prior\": \"n/a\"\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": false,
+      "invented_figures": [
+        "15"
+      ],
+      "latency_ms": 51101,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.75,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.33531105825205576,
+        "factual_correctness": 0.67
+      },
+      "errors": {}
+    },
+    {
+      "id": "followup-add-dimension",
+      "user_input": "Now break that down by city.",
+      "response": "Conversion Rates by City. Tier II Cities and Thane & Outskirts have the highest conversion rates at 60.0% and 59.5%, respectively, but Tier II Cities' data is based on only five leads. Focus on replicating the high conversion rates seen in these areas while ensuring a larger sample size for more reliable insights.",
+      "retrieved_contexts": [
+        "Metric: Conversion rate (conversion_rate, rate); higher is better for the business.",
+        "Window: 2026-09-01 to 2026-09-24, grain total.",
+        "Split by: city. No comparison window was requested.",
+        "Whole-window total: 40.9%.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (7 rows):\n[\n  {\n    \"city\": \"Tier II Cities\",\n    \"conversion_rate\": \"60.0%\",\n    \"n\": 5,\n    \"won\": 3\n  },\n  {\n    \"city\": \"Thane & Outskirts\",\n    \"conversion_rate\": \"59.5%\",\n    \"n\": 42,\n    \"won\": 25\n  },\n  {\n    \"city\": \"Other Cities of Maharashtra\",\n    \"conversion_rate\": \"44.0%\",\n    \"n\": 25,\n    \"won\": 11\n  },\n  {\n    \"city\": \"Mumbai\",\n    \"conversion_rate\": \"43.4%\",\n    \"n\": 228,\n    \"won\": 99\n  },\n  {\n    \"city\": \"Other Cities\",\n    \"conversion_rate\": \"40.4%\",\n    \"n\": 47,\n    \"won\": 19\n  },\n  {\n    \"city\": \"(unknown)\",\n    \"conversion_rate\": \"35.6%\",\n    \"n\": 239,\n    \"won\": 85\n  },\n  {\n    \"city\": \"Other Metro Cities\",\n    \"conversion_rate\": \"33.3%\",\n    \"n\": 30,\n    \"won\": 10\n  }\n]"
+      ],
+      "reference": "Conversion rate for 2026-09-01 to 2026-09-24 is 40.9%. Tier II Cities: 60.0%. Thane & Outskirts: 59.5%. Other Cities of Maharashtra: 44.0%. Mumbai: 43.4%. Other Cities: 40.4%. (unknown): 35.6%. Other Metro Cities: 33.3%.",
+      "reference_contexts": [
+        "Query Metric: conversion_rate (rate)",
+        "Query Grain: total",
+        "Date Range: 2026-09-01 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"city\": \"Tier II Cities\",\n    \"conversion_rate\": \"60.0%\",\n    \"n\": 5,\n    \"won\": 3\n  },\n  {\n    \"city\": \"Thane & Outskirts\",\n    \"conversion_rate\": \"59.5%\",\n    \"n\": 42,\n    \"won\": 25\n  },\n  {\n    \"city\": \"Other Cities of Maharashtra\",\n    \"conversion_rate\": \"44.0%\",\n    \"n\": 25,\n    \"won\": 11\n  },\n  {\n    \"city\": \"Mumbai\",\n    \"conversion_rate\": \"43.4%\",\n    \"n\": 228,\n    \"won\": 99\n  },\n  {\n    \"city\": \"Other Cities\",\n    \"conversion_rate\": \"40.4%\",\n    \"n\": 47,\n    \"won\": 19\n  },\n  {\n    \"city\": \"(unknown)\",\n    \"conversion_rate\": \"35.6%\",\n    \"n\": 239,\n    \"won\": 85\n  },\n  {\n    \"city\": \"Other Metro Cities\",\n    \"conversion_rate\": \"33.3%\",\n    \"n\": 30,\n    \"won\": 10\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 32123,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.6,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.5009488427074447,
+        "factual_correctness": 0.25
+      },
+      "errors": {}
+    },
+    {
+      "id": "followup-shift-window",
+      "user_input": "Same thing for last month.",
+      "response": "August Conversion Rates by Lead Source. The overall conversion rate for August was 41.6%, with 'Unknown' and 'Welingak Website' sources showing perfect conversion rates, though these segments have small sample sizes. 'Google' leads had the highest volume with a 41.0% conversion rate. Focus on improving conversion rates for 'Olark Chat' and 'Facebook', which are significantly lower.",
+      "retrieved_contexts": [
+        "Metric: Conversion rate (conversion_rate, rate); higher is better for the business.",
+        "Window: 2026-08-01 to 2026-08-31, grain total.",
+        "Split by: lead_source. No comparison window was requested.",
+        "Whole-window total: 41.6%.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (10 rows):\n[\n  {\n    \"lead_source\": \"Unknown\",\n    \"conversion_rate\": \"100.0%\",\n    \"n\": 3,\n    \"won\": 3\n  },\n  {\n    \"lead_source\": \"Welingak Website\",\n    \"conversion_rate\": \"100.0%\",\n    \"n\": 8,\n    \"won\": 8\n  },\n  {\n    \"lead_source\": \"Reference\",\n    \"conversion_rate\": \"94.1%\",\n    \"n\": 51,\n    \"won\": 48\n  },\n  {\n    \"lead_source\": \"Other\",\n    \"conversion_rate\": \"50.0%\",\n    \"n\": 2,\n    \"won\": 1\n  },\n  {\n    \"lead_source\": \"Google\",\n    \"conversion_rate\": \"41.0%\",\n    \"n\": 222,\n    \"won\": 91\n  },\n  {\n    \"lead_source\": \"Organic Search\",\n    \"conversion_rate\": \"39.5%\",\n    \"n\": 86,\n    \"won\": 34\n  },\n  {\n    \"lead_source\": \"Referral Sites\",\n    \"conversion_rate\": \"37.5%\",\n    \"n\": 16,\n    \"won\": 6\n  },\n  {\n    \"lead_source\": \"Direct Traffic\",\n    \"conversion_rate\": \"37.3%\",\n    \"n\": 193,\n    \"won\": 72\n  },\n  {\n    \"lead_source\": \"Olark Chat\",\n    \"conversion_rate\": \"23.4%\",\n    \"n\": 111,\n    \"won\": 26\n  },\n  {\n    \"lead_source\": \"Facebook\",\n    \"conversion_rate\": \"20.0%\",\n    \"n\": 5,\n    \"won\": 1\n  }\n]"
+      ],
+      "reference": "Conversion rate for 2026-08-01 to 2026-08-31 is 41.6%. Unknown: 100.0%. Welingak Website: 100.0%. Reference: 94.1%. Other: 50.0%. Google: 41.0%. Organic Search: 39.5%. Referral Sites: 37.5%. Direct Traffic: 37.3%. Olark Chat: 23.4%. Facebook: 20.0%.",
+      "reference_contexts": [
+        "Query Metric: conversion_rate (rate)",
+        "Query Grain: total",
+        "Date Range: 2026-08-01 to 2026-08-31",
+        "Data Table:\n[\n  {\n    \"lead_source\": \"Unknown\",\n    \"conversion_rate\": \"100.0%\",\n    \"n\": 3,\n    \"won\": 3\n  },\n  {\n    \"lead_source\": \"Welingak Website\",\n    \"conversion_rate\": \"100.0%\",\n    \"n\": 8,\n    \"won\": 8\n  },\n  {\n    \"lead_source\": \"Reference\",\n    \"conversion_rate\": \"94.1%\",\n    \"n\": 51,\n    \"won\": 48\n  },\n  {\n    \"lead_source\": \"Other\",\n    \"conversion_rate\": \"50.0%\",\n    \"n\": 2,\n    \"won\": 1\n  },\n  {\n    \"lead_source\": \"Google\",\n    \"conversion_rate\": \"41.0%\",\n    \"n\": 222,\n    \"won\": 91\n  },\n  {\n    \"lead_source\": \"Organic Search\",\n    \"conversion_rate\": \"39.5%\",\n    \"n\": 86,\n    \"won\": 34\n  },\n  {\n    \"lead_source\": \"Referral Sites\",\n    \"conversion_rate\": \"37.5%\",\n    \"n\": 16,\n    \"won\": 6\n  },\n  {\n    \"lead_source\": \"Direct Traffic\",\n    \"conversion_rate\": \"37.3%\",\n    \"n\": 193,\n    \"won\": 72\n  },\n  {\n    \"lead_source\": \"Olark Chat\",\n    \"conversion_rate\": \"23.4%\",\n    \"n\": 111,\n    \"won\": 26\n  },\n  {\n    \"lead_source\": \"Facebook\",\n    \"conversion_rate\": \"20.0%\",\n    \"n\": 5,\n    \"won\": 1\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 33849,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 1.0,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.3747716930506963,
+        "factual_correctness": 0.27
+      },
+      "errors": {}
+    },
+    {
+      "id": "followup-narrow-to-one",
+      "user_input": "Just Google please.",
+      "response": "Google Lead Conversion Rate. Google leads converted at 51.7%, in line with the overall rate. Continue optimizing Google ads to maintain this performance.",
+      "retrieved_contexts": [
+        "Metric: Conversion rate (conversion_rate, rate); higher is better for the business.",
+        "Window: 2026-09-01 to 2026-09-24, grain total.",
+        "Split by: lead_source. No comparison window was requested.",
+        "Whole-window total: 51.7%.",
+        "Caveats to respect: Bucketed by lead creation date, so a lead counts in the period it arrived.",
+        "Data table (1 rows):\n[\n  {\n    \"lead_source\": \"Google\",\n    \"conversion_rate\": \"51.7%\",\n    \"n\": 180,\n    \"won\": 93\n  }\n]"
+      ],
+      "reference": "Conversion rate for 2026-09-01 to 2026-09-24 is 51.7%. Google: 51.7%.",
+      "reference_contexts": [
+        "Query Metric: conversion_rate (rate)",
+        "Query Grain: total",
+        "Date Range: 2026-09-01 to 2026-09-24",
+        "Data Table:\n[\n  {\n    \"lead_source\": \"Google\",\n    \"conversion_rate\": \"51.7%\",\n    \"n\": 180,\n    \"won\": 93\n  }\n]"
+      ],
+      "is_refusal": false,
+      "expected_kind": "query",
+      "intent_pass": true,
+      "intent_reason": "compiles to the expected pipeline",
+      "figures_checked": true,
+      "invented_figures": [],
+      "latency_ms": 29735,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "faithfulness": 0.6666666666666666,
+        "response_groundedness": 1.0,
+        "answer_relevancy": 0.5182158894563542,
+        "factual_correctness": 0.5
+      },
+      "errors": {}
+    },
+    {
+      "id": "refuse-ltv",
+      "user_input": "What is our customer lifetime value?",
+      "response": "Customer lifetime value is not available in the lead pipeline data.\n\nTry instead: You can review the conversion rate and average days to convert to understand how leads are progressing.",
+      "retrieved_contexts": [
+        "Allowed metrics: leads_created, deals_won, deal_conversion_pct, revenue_won, open_pipeline, pipeline_volume, cycle_time_days, time_to_first_contact_min, total_spend, cac, roas.",
+        "Allowed dimensions: lead_source, rep_id, channel, campaign, region, status, stage."
+      ],
+      "reference": "This question cannot be answered from the available data. The correct response declines to answer, says why, and offers a question the data can answer instead.",
+      "reference_contexts": null,
+      "is_refusal": true,
+      "expected_kind": "refusal",
+      "intent_pass": true,
+      "intent_reason": "declined, as it should have",
+      "figures_checked": false,
+      "invented_figures": [],
+      "latency_ms": 8378,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "refusal_quality": 5.0
+      },
+      "errors": {},
+      "reasons": {
+        "refusal_quality": "The response declines to answer the specific question about customer lifetime value, explaining that the required data is not available in the lead pipeline data. It then proposes an alternative question that can be answered with the available data, which is conversion rate and average days to convert. This response aligns with the rubric for a score of 5."
+      }
+    },
+    {
+      "id": "refuse-revenue",
+      "user_input": "How much revenue did we book last quarter?",
+      "response": "Revenue data is not available in the lead pipeline data.\n\nTry instead: You can check the conversion rate and the number of leads converted last quarter to get an idea of customer acquisition.",
+      "retrieved_contexts": [
+        "Allowed metrics: leads_created, deals_won, deal_conversion_pct, revenue_won, open_pipeline, pipeline_volume, cycle_time_days, time_to_first_contact_min, total_spend, cac, roas.",
+        "Allowed dimensions: lead_source, rep_id, channel, campaign, region, status, stage."
+      ],
+      "reference": "This question cannot be answered from the available data. The correct response declines to answer, says why, and offers a question the data can answer instead.",
+      "reference_contexts": null,
+      "is_refusal": true,
+      "expected_kind": "refusal",
+      "intent_pass": true,
+      "intent_reason": "declined, as it should have",
+      "figures_checked": false,
+      "invented_figures": [],
+      "latency_ms": 8375,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "refusal_quality": 5.0
+      },
+      "errors": {},
+      "reasons": {
+        "refusal_quality": "The response declines to answer the specific question about revenue, explaining that the required data is not available in the lead pipeline data. It goes further by proposing an alternative question that can be answered with the available data, which is to check the conversion rate and the number of leads converted last quarter."
+      }
+    },
+    {
+      "id": "refuse-deal-size",
+      "user_input": "What is the average deal size by channel?",
+      "response": "The data does not contain information about deal size.\n\nTry instead: You can check the conversion rate or cost per lead by channel.",
+      "retrieved_contexts": [
+        "Allowed metrics: leads_created, deals_won, deal_conversion_pct, revenue_won, open_pipeline, pipeline_volume, cycle_time_days, time_to_first_contact_min, total_spend, cac, roas.",
+        "Allowed dimensions: lead_source, rep_id, channel, campaign, region, status, stage."
+      ],
+      "reference": "This question cannot be answered from the available data. The correct response declines to answer, says why, and offers a question the data can answer instead.",
+      "reference_contexts": null,
+      "is_refusal": true,
+      "expected_kind": "refusal",
+      "intent_pass": true,
+      "intent_reason": "declined, as it should have",
+      "figures_checked": false,
+      "invented_figures": [],
+      "latency_ms": 7554,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "refusal_quality": 5.0
+      },
+      "errors": {},
+      "reasons": {
+        "refusal_quality": "The response declines to answer the question about average deal size by channel, explaining that the data does not contain this information. It then proposes an alternative question that can be answered with the available data, which aligns with the highest scoring rubric criteria."
+      }
+    },
+    {
+      "id": "refuse-named-person",
+      "user_input": "Show me everything about lead 660737 and their phone number.",
+      "response": "Individual lead details and phone numbers are not available in the dataset.\n\nTry instead: You can filter by lead_source or other dimensions to get aggregated data for a specific segment of leads.",
+      "retrieved_contexts": [
+        "Allowed metrics: leads_created, deals_won, deal_conversion_pct, revenue_won, open_pipeline, pipeline_volume, cycle_time_days, time_to_first_contact_min, total_spend, cac, roas.",
+        "Allowed dimensions: lead_source, rep_id, channel, campaign, region, status, stage."
+      ],
+      "reference": "This question cannot be answered from the available data. The correct response declines to answer, says why, and offers a question the data can answer instead.",
+      "reference_contexts": null,
+      "is_refusal": true,
+      "expected_kind": "refusal",
+      "intent_pass": true,
+      "intent_reason": "declined, as it should have",
+      "figures_checked": false,
+      "invented_figures": [],
+      "latency_ms": 8543,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "refusal_quality": 5.0
+      },
+      "errors": {},
+      "reasons": {
+        "refusal_quality": "The response declines to answer the specific question about lead details and phone numbers, explaining that this information is not available in the dataset. It goes further by suggesting an alternative approach to get useful data, which aligns with the highest scoring rubric criteria."
+      }
+    },
+    {
+      "id": "refuse-out-of-window",
+      "user_input": "How did we do in 2019?",
+      "response": "The data covers 2025-07-24 to 2026-09-24 and does not include any information from 2019.\n\nTry instead: You can ask about the most recent periods available, such as last year or year to date.",
+      "retrieved_contexts": [
+        "Allowed metrics: leads_created, deals_won, deal_conversion_pct, revenue_won, open_pipeline, pipeline_volume, cycle_time_days, time_to_first_contact_min, total_spend, cac, roas.",
+        "Allowed dimensions: lead_source, rep_id, channel, campaign, region, status, stage."
+      ],
+      "reference": "This question cannot be answered from the available data. The correct response declines to answer, says why, and offers a question the data can answer instead.",
+      "reference_contexts": null,
+      "is_refusal": true,
+      "expected_kind": "refusal",
+      "intent_pass": true,
+      "intent_reason": "declined, as it should have",
+      "figures_checked": false,
+      "invented_figures": [],
+      "latency_ms": 11579,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "refusal_quality": 5.0
+      },
+      "errors": {},
+      "reasons": {
+        "refusal_quality": "The response declines to answer the question about 2019 and explains that the data does not include information from that year. It also proposes a related question that the data can answer, which is a strong approach."
+      }
+    },
+    {
+      "id": "refuse-headcount",
+      "user_input": "How many salespeople should we hire next quarter?",
+      "response": "The data does not contain information about headcount or future hiring needs.\n\nTry instead: You can review the current performance of sales reps by looking at their conversion rates or the number of leads they handle.",
+      "retrieved_contexts": [
+        "Allowed metrics: leads_created, deals_won, deal_conversion_pct, revenue_won, open_pipeline, pipeline_volume, cycle_time_days, time_to_first_contact_min, total_spend, cac, roas.",
+        "Allowed dimensions: lead_source, rep_id, channel, campaign, region, status, stage."
+      ],
+      "reference": "This question cannot be answered from the available data. The correct response declines to answer, says why, and offers a question the data can answer instead.",
+      "reference_contexts": null,
+      "is_refusal": true,
+      "expected_kind": "refusal",
+      "intent_pass": true,
+      "intent_reason": "declined, as it should have",
+      "figures_checked": false,
+      "invented_figures": [],
+      "latency_ms": 8876,
+      "agent_model": "qwen2.5:32b",
+      "agent_on_workers_ai": false,
+      "scores": {
+        "refusal_quality": 5.0
+      },
+      "errors": {},
+      "reasons": {
+        "refusal_quality": "The response declines to answer the specific question about the number of salespeople to hire, explaining that the necessary data is not available. It then proposes a related question that can be answered with the available data, which is a constructive approach."
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+
+  // A second Worker, deliberately separate from the `leadpulse` app Worker.
+  //
+  // Keeping it apart matters for two reasons. It is a public relay to a GPU, so
+  // it should not share an origin with the app's own routes and assets - and the
+  // app Worker is the thing that *calls* the model, so pointing LLM_BASE_URL at
+  // its own hostname would have it issue a subrequest back into itself.
+  //
+  // Deploy:  npx wrangler deploy -c gateway/wrangler.jsonc
+  // Served at: https://leadpulse-llm.<workers.dev subdomain>.workers.dev
+  "name": "leadpulse-llm",
+  "account_id": "383f4d764d24ff66d8afce4af54b2a62",
+  "main": "index.ts",
+  "compatibility_date": "2026-09-24",
+
+  // Where the current quick-tunnel URL lives. One key, rewritten by the
+  // notebook on every session start; KV is the right shape for it because the
+  // write is rare and the read happens on every model call.
+  "kv_namespaces": [
+    { "binding": "UPSTREAM", "id": "f0af1740f790476eba2d00a3dd4f54be" }
+  ],
+
+  // Worth having on: when the model stops answering, the question is almost
+  // always whether requests reached the gateway at all.
+  "observability": { "enabled": true }
+
+  // Secret, set once with:
+  //   npx wrangler secret put GATEWAY_TOKEN -c gateway/wrangler.jsonc
+  //   GATEWAY_TOKEN
+}

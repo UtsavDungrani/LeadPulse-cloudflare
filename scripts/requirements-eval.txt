@@ -1,0 +1,28 @@
+# Python dependencies for the Ragas evaluation suite (scripts/eval_ragas.py).
+#
+#   pip install -r scripts/requirements-eval.txt
+#
+# Pinned to a floor rather than an exact version because the thing that actually
+# breaks across releases is the metric API, and that is what the floors guard.
+#
+# ragas >= 0.4 is a hard requirement, not a preference: 0.4 removed the legacy
+# metric singletons (`ragas.metrics.faithfulness`) and the `evaluate()` entry
+# point they fed, and replaced them with the `ragas.metrics.collections` classes
+# that this runner scores one sample at a time. On 0.3 or earlier the imports in
+# eval_ragas.py do not resolve.
+ragas>=0.4.0,<0.5
+
+# The OpenAI client is the transport for both judges: the real API when
+# OPENAI_API_KEY is set, and otherwise the Worker's OpenAI-compatible
+# /api/eval/chat/completions and /api/eval/embeddings routes.
+openai>=1.60
+
+# Pydantic v2 - the metric response models are v2 models.
+pydantic>=2.9,<3
+
+requests>=2.31
+
+# Optional. Only needed to push the resulting scores into Langfuse; the suite
+# runs and reports without it. v3+ only, for the start_observation/create_score
+# surface - the v2 `langfuse.trace()` call does not exist here.
+langfuse>=3.0
